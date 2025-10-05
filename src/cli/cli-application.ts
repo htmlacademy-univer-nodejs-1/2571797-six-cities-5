@@ -24,11 +24,11 @@ export class CLIApplication {
     return this.registeredCommands[command] ?? this.registeredCommands[this.defaultCommand];
   }
 
-  public processCommand(data: string[]): void {
+  public async processCommand(data: string[]): Promise<void> {
     const parsedData = CommandParser.parse(data);
     const [commandName] = Object.keys(parsedData);
     const command = this.getCommand(commandName);
     const commandArg = parsedData[command.getName()] ?? [];
-    command.execute(...commandArg);
+    await command.execute(...commandArg);
   }
 }

@@ -1,3 +1,3 @@
 export interface FileReader {
-  read(): void;
+  readOffers(): Promise<any[]>;
 }
