@@ -3,9 +3,9 @@ import { MockServerResponse, GeneratedOffer, MockOfferData } from '../../shared/
 import { DataGenerator } from '../../shared/libs/data-generator/data-generator.js';
 import chalk from 'chalk';
 import got from 'got';
-import { createWriteStream } from 'fs';
-import { pipeline } from 'stream/promises';
-import { Transform } from 'stream';
+import { createWriteStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import { Transform } from 'node:stream';
 
 export class GenerateCommand implements CommandInterface {
   private readonly dataGenerator = new DataGenerator();
@@ -31,10 +31,10 @@ export class GenerateCommand implements CommandInterface {
     try {
       console.log(chalk.blue('Fetching mock data from server...'));
       const mockData = await this.fetchMockData(url);
-      
+
       console.log(chalk.blue(`Generating ${offerCount} offers...`));
       await this.generateOffersToFile(mockData, offerCount, filepath);
-      
+
       console.log(chalk.green(`Successfully generated ${offerCount} offers to ${filepath}`));
     } catch (error) {
       if (error instanceof Error) {
@@ -57,14 +57,14 @@ export class GenerateCommand implements CommandInterface {
 
   private async generateOffersToFile(mockData: MockServerResponse, count: number, filepath: string): Promise<void> {
     const writeStream = createWriteStream(filepath);
-    
+
     const header = 'title\tdescription\tdate\tcity\tpreviewImage\timages\tisPremium\tisFavorite\trating\thousingType\trooms\tguests\tprice\tcomforts\tauthorName\tauthorEmail\tauthorAvatar\tpassword\tuserType\tlatitude\tlongitude\n';
     writeStream.write(header);
 
     const transformStream = new Transform({
       objectMode: true,
       transform: (chunk: GeneratedOffer, _encoding, callback) => {
-        const line = this.formatOfferAsTSV(chunk) + '\n';
+        const line = `${this.formatOfferAsTSV(chunk) }\n`;
         callback(null, line);
       }
     });
@@ -76,9 +76,9 @@ export class GenerateCommand implements CommandInterface {
       const authorAvatar = `/img/user-avatar${this.dataGenerator.generateRandomNumber(1, 10)}.png`;
       const password = `password${this.dataGenerator.generateRandomNumber(100, 999)}`;
       const userType = Math.random() < 0.2 ? 'pro' : 'normal';
-      
+
       const generatedOffer = this.dataGenerator.generateOfferFromMock(mockOffer, authorName, authorEmail, authorAvatar, password, userType);
-      
+
       transformStream.write(generatedOffer);
     }
 

@@ -12,7 +12,7 @@ export class DataGenerator {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  public generateRandomFloat(min: number, max: number, decimals: number = 1): number {
+  public generateRandomFloat(min: number, max: number, decimals = 1): number {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
   }
 

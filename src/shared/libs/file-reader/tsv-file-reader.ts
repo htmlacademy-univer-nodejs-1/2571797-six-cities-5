@@ -19,7 +19,7 @@ export class TSVFileReader implements FileReader {
     let lineNumber = 0;
     for await (const line of rl) {
       lineNumber++;
-      
+
       if (line.trim().length === 0) {
         continue;
       }
@@ -38,15 +38,15 @@ export class TSVFileReader implements FileReader {
 
   private parseLine(line: string, _lineNumber: number): Offer {
     const fields = line.split('\t');
-    
+
     if (fields.length < 21) {
       throw new Error(`Invalid TSV format: expected 21 fields, got ${fields.length}`);
     }
 
     const [
-      title, description, createdDate, city, previewImage, images, 
-      isPremium, isFavorite, rating, housingType, rooms, maxGuests, 
-      price, comforts, authorName, authorEmail, authorAvatar, 
+      title, description, createdDate, city, previewImage, images,
+      isPremium, isFavorite, rating, housingType, rooms, maxGuests,
+      price, comforts, authorName, authorEmail, authorAvatar,
       password, userType, latitude, longitude
     ] = fields;
 
@@ -66,15 +66,15 @@ export class TSVFileReader implements FileReader {
       price: parseInt(price, 10),
       comforts: comforts.split(';').map((comfort) => comfort as unknown as ComfortType),
       author: {
-        name: authorName, 
-        email: authorEmail, 
-        avatar: authorAvatar, 
-        password, 
+        name: authorName,
+        email: authorEmail,
+        avatar: authorAvatar,
+        password,
         userType
       } as unknown as User,
       commentsCount: 0,
       location: {
-        latitude: parseFloat(latitude), 
+        latitude: parseFloat(latitude),
         longitude: parseFloat(longitude)
       } as unknown as Location,
     };
