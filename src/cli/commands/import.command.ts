@@ -3,6 +3,7 @@ import {TSVFileReader} from '../../shared/libs/file-reader/tsv-file-reader.js';
 import {DatabaseClient} from '../../rest-api/database/database.js';
 import {UserService} from '../../rest-api/services/user.service.js';
 import {OfferService} from '../../rest-api/services/offer.service.js';
+import {FavoriteService} from '../../rest-api/services/favorite.service.js';
 import type {UserEntity} from '../../rest-api/models/user.model.js';
 import type {OfferEntity} from '../../rest-api/models/offer.model.js';
 import {config} from '../config/config.js';
@@ -27,7 +28,8 @@ export class ImportCommand implements CommandInterface {
     const fileReader = new TSVFileReader(filename);
     const databaseClient = DatabaseClient.getInstance();
     const userService = new UserService();
-    const offerService = new OfferService();
+    const favoriteService = new FavoriteService();
+    const offerService = new OfferService(favoriteService);
 
     try {
       console.log(chalk.blue(`Importing data from file: ${filename}`));
@@ -90,7 +92,6 @@ export class ImportCommand implements CommandInterface {
             previewImage: offer.previewImage,
             images: offer.images,
             isPremium: offer.isPremium,
-            isFavorite: offer.isFavorite,
             rating: offer.rating,
             housingType: stringToHousingType(offer.housingType),
             rooms: offer.rooms,
