@@ -6,12 +6,6 @@ convict.addFormat(convictFormatWithValidator.ipaddress);
 convict.addFormat(convictFormatWithValidator.url);
 
 export const config = convict({
-  port: {
-    doc: 'The port to bind.',
-    format: 'port',
-    default: 4000,
-    env: 'PORT'
-  },
   db: {
     host: {
       doc: 'Database host name/IP',
@@ -43,13 +37,8 @@ export const config = convict({
       default: 'password123',
       env: 'DB_PASSWORD'
     }
-  },
-  salt: {
-    doc: 'Salt for password hashing',
-    format: String,
-    default: '',
-    env: 'SALT'
   }
 });
 
 config.validate({ allowed: 'strict' });
+
