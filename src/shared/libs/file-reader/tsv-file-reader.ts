@@ -24,6 +24,10 @@ export class TSVFileReader implements FileReader {
         continue;
       }
 
+      if (lineNumber === 1 && line.includes('title\tdescription')) {
+        continue;
+      }
+
       try {
         const offer = this.parseLine(line, lineNumber);
         offers.push(offer);
@@ -47,7 +51,7 @@ export class TSVFileReader implements FileReader {
       title, description, createdDate, city, previewImage, images,
       isPremium, isFavorite, rating, housingType, rooms, maxGuests,
       price, comforts, authorName, authorEmail, authorAvatar,
-      password, userType, latitude, longitude
+      password, type, latitude, longitude
     ] = fields;
 
     return {
@@ -70,7 +74,7 @@ export class TSVFileReader implements FileReader {
         email: authorEmail,
         avatar: authorAvatar,
         password,
-        userType
+        type
       } as unknown as User,
       commentsCount: 0,
       location: {

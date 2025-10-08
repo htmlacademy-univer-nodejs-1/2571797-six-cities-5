@@ -58,7 +58,7 @@ export class GenerateCommand implements CommandInterface {
   private async generateOffersToFile(mockData: MockServerResponse, count: number, filepath: string): Promise<void> {
     const writeStream = createWriteStream(filepath);
 
-    const header = 'title\tdescription\tdate\tcity\tpreviewImage\timages\tisPremium\tisFavorite\trating\thousingType\trooms\tguests\tprice\tcomforts\tauthorName\tauthorEmail\tauthorAvatar\tpassword\tuserType\tlatitude\tlongitude\n';
+    const header = 'title\tdescription\tdate\tcity\tpreviewImage\timages\tisPremium\tisFavorite\trating\thousingType\trooms\tguests\tprice\tcomforts\tauthorName\tauthorEmail\tauthorAvatar\tpassword\ttype\tlatitude\tlongitude\n';
     writeStream.write(header);
 
     const transformStream = new Transform({
