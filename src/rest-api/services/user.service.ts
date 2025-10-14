@@ -2,6 +2,7 @@ import { UserModel, UserEntity } from '../models/user.model.js';
 import type { UserDocument } from '../models/user.model.js';
 import { UserDatabaseService } from '../interfaces/database.interface.js';
 
+
 export class UserService implements UserDatabaseService {
   public async findById(id: string): Promise<UserDocument | null> {
     try {

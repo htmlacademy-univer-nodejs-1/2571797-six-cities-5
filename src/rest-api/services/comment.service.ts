@@ -5,7 +5,7 @@ import { CommentDatabaseService } from '../interfaces/database.interface.js';
 export class CommentService implements CommentDatabaseService {
   public async findById(id: string): Promise<CommentDocument | null> {
     try {
-      const result = await (CommentModel as unknown as any).findById(id)
+      const result = await CommentModel.findById(id)
         .populate('author')
         .populate('offer')
         .exec();
@@ -18,12 +18,12 @@ export class CommentService implements CommentDatabaseService {
   public async create(data: Partial<CommentEntity>): Promise<CommentDocument> {
     const comment = new CommentModel(data);
     const savedComment = await comment.save();
-    return savedComment as unknown as CommentDocument;
+    return savedComment;
   }
 
   public async findAll(limit?: number): Promise<CommentDocument[]> {
     try {
-      let query = (CommentModel as unknown as any).find()
+      let query = CommentModel.find()
         .populate('author')
         .populate('offer')
         .sort({ postDate: -1 });
@@ -33,7 +33,7 @@ export class CommentService implements CommentDatabaseService {
       }
 
       const result = await query.exec();
-      return result as unknown as CommentDocument[];
+      return result;
     } catch (error) {
       return [];
     }
@@ -41,7 +41,7 @@ export class CommentService implements CommentDatabaseService {
 
   public async update(id: string, data: Partial<CommentEntity>): Promise<CommentDocument | null> {
     try {
-      const result = await (CommentModel as unknown as any).findByIdAndUpdate(id, data, { new: true })
+      const result = await CommentModel.findByIdAndUpdate(id, data, { new: true })
         .populate('author')
         .populate('offer')
         .exec();
@@ -62,12 +62,12 @@ export class CommentService implements CommentDatabaseService {
 
   public async findByOfferId(offerId: string, limit = 50): Promise<CommentDocument[]> {
     try {
-      const result = await (CommentModel as unknown as any).find({ offer: offerId })
+      const result = await CommentModel.find({ offer: offerId })
         .populate('author')
         .sort({ postDate: -1 })
         .limit(limit)
         .exec();
-      return result as unknown as CommentDocument[];
+      return result;
     } catch (error) {
       return [];
     }
