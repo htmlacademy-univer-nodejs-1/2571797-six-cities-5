@@ -71,12 +71,6 @@ export class OfferEntity {
 
   @prop({
     required: true,
-    default: false
-  })
-  public isFavorite!: boolean;
-
-  @prop({
-    required: true,
     min: 1,
     max: 5,
     set: (val: number) => Math.round(val * 10) / 10

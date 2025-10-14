@@ -1,8 +1,15 @@
 import { CommentModel, CommentEntity } from '../models/comment.model.js';
 import type { CommentDocument } from '../models/comment.model.js';
-import { CommentDatabaseService } from '../interfaces/database.interface.js';
+import { CommentDatabaseService, OfferDatabaseService } from '../interfaces/database.interface.js';
+import { DatabaseException } from '../exceptions/app.exception.js';
+import { injectable, inject } from 'inversify';
 
+@injectable()
 export class CommentService implements CommentDatabaseService {
+  constructor(
+    @inject('OfferService') private readonly offerService: OfferDatabaseService
+  ) {}
+
   public async findById(id: string): Promise<CommentDocument | null> {
     try {
       const result = await CommentModel.findById(id)
@@ -11,14 +18,23 @@ export class CommentService implements CommentDatabaseService {
         .exec();
       return result as CommentDocument | null;
     } catch (error) {
-      return null;
+      throw new DatabaseException('Failed to find comment by id');
     }
   }
 
   public async create(data: Partial<CommentEntity>): Promise<CommentDocument> {
-    const comment = new CommentModel(data);
-    const savedComment = await comment.save();
-    return savedComment;
+    try {
+      const comment = new CommentModel(data);
+      const savedComment = await comment.save();
+
+      if (savedComment.offer) {
+        await this.updateOfferStats(savedComment.offer.toString());
+      }
+
+      return savedComment;
+    } catch (error) {
+      throw new DatabaseException('Failed to create comment');
+    }
   }
 
   public async findAll(limit?: number): Promise<CommentDocument[]> {
@@ -35,7 +51,7 @@ export class CommentService implements CommentDatabaseService {
       const result = await query.exec();
       return result;
     } catch (error) {
-      return [];
+      throw new DatabaseException('Failed to find comments');
     }
   }
 
@@ -47,16 +63,26 @@ export class CommentService implements CommentDatabaseService {
         .exec();
       return result as CommentDocument | null;
     } catch (error) {
-      return null;
+      throw new DatabaseException('Failed to update comment');
     }
   }
 
   public async delete(id: string): Promise<boolean> {
     try {
+      const comment = await CommentModel.findById(id).select('offer').exec();
+      if (!comment) {
+        return false;
+      }
+
       const result = await CommentModel.findByIdAndDelete(id).exec();
+
+      if (result && comment.offer) {
+        await this.updateOfferStats(comment.offer.toString());
+      }
+
       return !!result;
     } catch (error) {
-      return false;
+      throw new DatabaseException('Failed to delete comment');
     }
   }
 
@@ -69,7 +95,40 @@ export class CommentService implements CommentDatabaseService {
         .exec();
       return result;
     } catch (error) {
-      return [];
+      throw new DatabaseException('Failed to find comments by offer id');
+    }
+  }
+
+  private async updateOfferStats(offerId: string): Promise<void> {
+    try {
+      await this.offerService.updateCommentsCount(offerId);
+      await this.offerService.updateRating(offerId);
+    } catch (error) {
+      // Игнорируем ошибки обновления статистики
+    }
+  }
+
+  public async getAverageRating(offerId: string): Promise<number> {
+    try {
+      const comments = await CommentModel.find({ offer: offerId }).select('rating').exec();
+      if (comments.length === 0) {
+        return 0;
+      }
+
+      const totalRating = comments.reduce((sum, comment) => sum + comment.rating, 0);
+      const averageRating = totalRating / comments.length;
+
+      return Math.round(averageRating * 10) / 10;
+    } catch (error) {
+      throw new DatabaseException('Failed to get average rating');
+    }
+  }
+
+  public async getCommentsCount(offerId: string): Promise<number> {
+    try {
+      return await CommentModel.countDocuments({ offer: offerId });
+    } catch (error) {
+      throw new DatabaseException('Failed to get comments count');
     }
   }
 }
