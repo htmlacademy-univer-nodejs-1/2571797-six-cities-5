@@ -24,7 +24,7 @@ export class UserService implements UserDatabaseService {
   public async create(data: Partial<UserEntity>): Promise<UserDocument> {
     const user = new UserModel(data);
     const savedUser = await user.save();
-    return savedUser as any;
+    return savedUser as unknown as UserDocument;
   }
 
   public async findAll(limit?: number): Promise<UserDocument[]> {
@@ -34,7 +34,7 @@ export class UserService implements UserDatabaseService {
         query = query.limit(limit);
       }
       const result = await query.exec();
-      return result as any;
+      return result as unknown as UserDocument[];
     } catch (error) {
       return [];
     }
