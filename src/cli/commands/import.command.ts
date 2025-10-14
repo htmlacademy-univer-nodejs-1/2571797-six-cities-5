@@ -8,6 +8,7 @@ import type {OfferEntity} from '../../rest-api/models/offer.model.js';
 import {config} from '../config/config.js';
 import {Types} from 'mongoose';
 import chalk from 'chalk';
+import { stringToCity, stringToHousingType, stringsToComfortTypes } from '../../shared/utils/type-converters.js';
 
 export class ImportCommand implements CommandInterface {
   public getName(): string {
@@ -85,17 +86,17 @@ export class ImportCommand implements CommandInterface {
             title: offer.title,
             description: offer.description,
             postDate: offer.postDate,
-            city: offer.city as any,
+            city: stringToCity(offer.city),
             previewImage: offer.previewImage,
             images: offer.images,
             isPremium: offer.isPremium,
             isFavorite: offer.isFavorite,
             rating: offer.rating,
-            housingType: offer.housingType as any,
+            housingType: stringToHousingType(offer.housingType),
             rooms: offer.rooms,
             maxGuests: offer.maxGuests,
             price: offer.price,
-            comforts: offer.comforts as any,
+            comforts: stringsToComfortTypes(offer.comforts),
             author: new Types.ObjectId(userId),
             commentsCount: offer.commentsCount,
             location: {

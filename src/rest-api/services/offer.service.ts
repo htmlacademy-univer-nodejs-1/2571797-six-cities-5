@@ -5,9 +5,10 @@ import { OfferDatabaseService } from '../interfaces/database.interface.js';
 export class OfferService implements OfferDatabaseService {
   public async findById(id: string): Promise<OfferDocument | null> {
     try {
-      const query = (OfferModel as any).findById(id).populate('author');
-      const result = await query.exec();
-      return result as OfferDocument | null;
+      const result = await (OfferModel as any).findById(id)
+        .populate('author')
+        .exec();
+      return result;
     } catch (error) {
       return null;
     }
@@ -21,12 +22,14 @@ export class OfferService implements OfferDatabaseService {
 
   public async findAll(limit?: number): Promise<OfferDocument[]> {
     try {
-      const query = (OfferModel as any).find().populate('author').sort({ postDate: -1 });
+      let query = (OfferModel as any).find().populate('author').sort({ postDate: -1 });
+
       if (limit) {
-        query.limit(limit);
+        query = query.limit(limit);
       }
+
       const result = await query.exec();
-      return result as OfferDocument[];
+      return result;
     } catch (error) {
       return [];
     }
@@ -34,9 +37,10 @@ export class OfferService implements OfferDatabaseService {
 
   public async update(id: string, data: Partial<OfferEntity>): Promise<OfferDocument | null> {
     try {
-      const query = (OfferModel as any).findByIdAndUpdate(id, data, { new: true }).populate('author');
-      const result = await query.exec();
-      return result as OfferDocument | null;
+      const result = await (OfferModel as any).findByIdAndUpdate(id, data, { new: true })
+        .populate('author')
+        .exec();
+      return result;
     } catch (error) {
       return null;
     }
@@ -53,12 +57,14 @@ export class OfferService implements OfferDatabaseService {
 
   public async findByCity(city: string, limit?: number): Promise<OfferDocument[]> {
     try {
-      const query = (OfferModel as any).find({ city }).populate('author').sort({ postDate: -1 });
+      let query = (OfferModel as any).find({ city }).populate('author').sort({ postDate: -1 });
+
       if (limit) {
-        query.limit(limit);
+        query = query.limit(limit);
       }
+
       const result = await query.exec();
-      return result as OfferDocument[];
+      return result;
     } catch (error) {
       return [];
     }
@@ -66,12 +72,12 @@ export class OfferService implements OfferDatabaseService {
 
   public async findPremiumByCity(city: string, limit = 3): Promise<OfferDocument[]> {
     try {
-      const query = (OfferModel as any).find({ city, isPremium: true })
+      const result = await (OfferModel as any).find({ city, isPremium: true })
         .populate('author')
         .sort({ postDate: -1 })
-        .limit(limit);
-      const result = await query.exec();
-      return result as OfferDocument[];
+        .limit(limit)
+        .exec();
+      return result;
     } catch (error) {
       return [];
     }

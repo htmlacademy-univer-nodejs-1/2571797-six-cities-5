@@ -5,9 +5,11 @@ import { CommentDatabaseService } from '../interfaces/database.interface.js';
 export class CommentService implements CommentDatabaseService {
   public async findById(id: string): Promise<CommentDocument | null> {
     try {
-      const query = (CommentModel as any).findById(id).populate('author').populate('offer');
-      const result = await query.exec();
-      return result as CommentDocument | null;
+      const result = await (CommentModel as any).findById(id)
+        .populate('author')
+        .populate('offer')
+        .exec();
+      return result;
     } catch (error) {
       return null;
     }
@@ -21,12 +23,17 @@ export class CommentService implements CommentDatabaseService {
 
   public async findAll(limit?: number): Promise<CommentDocument[]> {
     try {
-      const query = (CommentModel as any).find().populate('author').populate('offer').sort({ postDate: -1 });
+      let query = (CommentModel as any).find()
+        .populate('author')
+        .populate('offer')
+        .sort({ postDate: -1 });
+
       if (limit) {
-        query.limit(limit);
+        query = query.limit(limit);
       }
+
       const result = await query.exec();
-      return result as CommentDocument[];
+      return result;
     } catch (error) {
       return [];
     }
@@ -34,9 +41,11 @@ export class CommentService implements CommentDatabaseService {
 
   public async update(id: string, data: Partial<CommentEntity>): Promise<CommentDocument | null> {
     try {
-      const query = (CommentModel as any).findByIdAndUpdate(id, data, { new: true }).populate('author').populate('offer');
-      const result = await query.exec();
-      return result as CommentDocument | null;
+      const result = await (CommentModel as any).findByIdAndUpdate(id, data, { new: true })
+        .populate('author')
+        .populate('offer')
+        .exec();
+      return result;
     } catch (error) {
       return null;
     }
@@ -53,12 +62,12 @@ export class CommentService implements CommentDatabaseService {
 
   public async findByOfferId(offerId: string, limit = 50): Promise<CommentDocument[]> {
     try {
-      const query = (CommentModel as any).find({ offer: offerId })
+      const result = await (CommentModel as any).find({ offer: offerId })
         .populate('author')
         .sort({ postDate: -1 })
-        .limit(limit);
-      const result = await query.exec();
-      return result as CommentDocument[];
+        .limit(limit)
+        .exec();
+      return result;
     } catch (error) {
       return [];
     }

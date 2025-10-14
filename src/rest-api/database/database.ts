@@ -6,7 +6,9 @@ import { config } from '../config/config.js';
 export class DatabaseClient {
   private static instance: DatabaseClient | undefined;
 
-  public constructor() { }
+  public constructor() {
+    // Singleton pattern
+  }
 
   public static getInstance(): DatabaseClient {
     if (!DatabaseClient.instance) {
@@ -24,7 +26,8 @@ export class DatabaseClient {
       await mongoose.connect(uri);
       logger.info('Successfully connected to MongoDB');
     } catch (error) {
-      logger.error('Failed to connect to MongoDB: %s', (error as Error).message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Failed to connect to MongoDB: %s', errorMessage);
       throw error;
     }
   }
@@ -35,7 +38,8 @@ export class DatabaseClient {
       await mongoose.disconnect();
       logger.info('Successfully disconnected from MongoDB');
     } catch (error) {
-      logger.error('Failed to disconnect from MongoDB: %s', (error as Error).message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Failed to disconnect from MongoDB: %s', errorMessage);
       throw error;
     }
   }

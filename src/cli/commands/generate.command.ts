@@ -48,7 +48,7 @@ export class GenerateCommand implements CommandInterface {
   private async fetchMockData(url: string): Promise<MockServerResponse> {
     try {
       const response = await got.get(`${url}/offers`);
-      const offers = JSON.parse(response.body) as MockOfferData[];
+      const offers: MockOfferData[] = JSON.parse(response.body);
       return { offers };
     } catch (error) {
       throw new Error(`Failed to fetch mock data from ${url}: ${error}`);

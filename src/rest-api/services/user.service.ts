@@ -5,7 +5,8 @@ import { UserDatabaseService } from '../interfaces/database.interface.js';
 export class UserService implements UserDatabaseService {
   public async findById(id: string): Promise<UserDocument | null> {
     try {
-      return await UserModel.findById(id).exec() as UserDocument | null;
+      const result = await UserModel.findById(id).exec();
+      return result as UserDocument | null;
     } catch (error) {
       return null;
     }
@@ -13,7 +14,8 @@ export class UserService implements UserDatabaseService {
 
   public async findByEmail(email: string): Promise<UserDocument | null> {
     try {
-      return await UserModel.findOne({ email }).exec() as UserDocument | null;
+      const result = await UserModel.findOne({ email }).exec();
+      return result as UserDocument | null;
     } catch (error) {
       return null;
     }
@@ -27,11 +29,12 @@ export class UserService implements UserDatabaseService {
 
   public async findAll(limit?: number): Promise<UserDocument[]> {
     try {
-      const query = UserModel.find();
+      let query = UserModel.find();
       if (limit) {
-        query.limit(limit);
+        query = query.limit(limit);
       }
-      return await query.exec() as any;
+      const result = await query.exec();
+      return result as any;
     } catch (error) {
       return [];
     }
@@ -39,7 +42,8 @@ export class UserService implements UserDatabaseService {
 
   public async update(id: string, data: Partial<UserEntity>): Promise<UserDocument | null> {
     try {
-      return await UserModel.findByIdAndUpdate(id, data, { new: true }).exec() as UserDocument | null;
+      const result = await UserModel.findByIdAndUpdate(id, data, { new: true }).exec();
+      return result as UserDocument | null;
     } catch (error) {
       return null;
     }
