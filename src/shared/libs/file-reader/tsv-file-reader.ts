@@ -1,7 +1,8 @@
 import {FileReader} from './file-reader.interface.js';
 import {createReadStream} from 'node:fs';
 import {createInterface} from 'node:readline';
-import {Offer, User, City, HousingType, Location, ComfortType} from '../../types/index.js';
+import {Offer} from '../../types/index.js';
+import { stringToCity, stringToHousingType, stringsToComfortTypes, stringToUserType } from '../../utils/type-converters.js';
 
 export class TSVFileReader implements FileReader {
   constructor(
@@ -21,6 +22,10 @@ export class TSVFileReader implements FileReader {
       lineNumber++;
 
       if (line.trim().length === 0) {
+        continue;
+      }
+
+      if (lineNumber === 1 && line.includes('title\tdescription')) {
         continue;
       }
 
@@ -47,36 +52,36 @@ export class TSVFileReader implements FileReader {
       title, description, createdDate, city, previewImage, images,
       isPremium, isFavorite, rating, housingType, rooms, maxGuests,
       price, comforts, authorName, authorEmail, authorAvatar,
-      password, userType, latitude, longitude
+      password, type, latitude, longitude
     ] = fields;
 
     return {
       title,
       description,
       postDate: new Date(createdDate),
-      city: city as City,
+      city: stringToCity(city),
       previewImage,
       images: images.split(';'),
       isPremium: isPremium === 'true',
       isFavorite: isFavorite === 'true',
       rating: parseFloat(rating),
-      housingType: housingType as unknown as HousingType,
+      housingType: stringToHousingType(housingType),
       rooms: parseInt(rooms, 10),
       maxGuests: parseInt(maxGuests, 10),
       price: parseInt(price, 10),
-      comforts: comforts.split(';').map((comfort) => comfort as unknown as ComfortType),
+      comforts: stringsToComfortTypes(comforts.split(';')),
       author: {
         name: authorName,
         email: authorEmail,
         avatar: authorAvatar,
         password,
-        userType
-      } as unknown as User,
+        type: stringToUserType(type)
+      },
       commentsCount: 0,
       location: {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude)
-      } as unknown as Location,
+      },
     };
   }
 }

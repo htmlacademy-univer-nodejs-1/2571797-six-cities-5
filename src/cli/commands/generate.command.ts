@@ -48,7 +48,7 @@ export class GenerateCommand implements CommandInterface {
   private async fetchMockData(url: string): Promise<MockServerResponse> {
     try {
       const response = await got.get(`${url}/offers`);
-      const offers = JSON.parse(response.body) as MockOfferData[];
+      const offers: MockOfferData[] = JSON.parse(response.body);
       return { offers };
     } catch (error) {
       throw new Error(`Failed to fetch mock data from ${url}: ${error}`);
@@ -58,7 +58,7 @@ export class GenerateCommand implements CommandInterface {
   private async generateOffersToFile(mockData: MockServerResponse, count: number, filepath: string): Promise<void> {
     const writeStream = createWriteStream(filepath);
 
-    const header = 'title\tdescription\tdate\tcity\tpreviewImage\timages\tisPremium\tisFavorite\trating\thousingType\trooms\tguests\tprice\tcomforts\tauthorName\tauthorEmail\tauthorAvatar\tpassword\tuserType\tlatitude\tlongitude\n';
+    const header = 'title\tdescription\tdate\tcity\tpreviewImage\timages\tisPremium\tisFavorite\trating\thousingType\trooms\tguests\tprice\tcomforts\tauthorName\tauthorEmail\tauthorAvatar\tpassword\ttype\tlatitude\tlongitude\n';
     writeStream.write(header);
 
     const transformStream = new Transform({
