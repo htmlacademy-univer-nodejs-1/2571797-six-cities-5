@@ -8,9 +8,14 @@ import { DatabaseClient } from '../database/database.js';
 import { UserService } from '../services/user.service.js';
 import { OfferService } from '../services/offer.service.js';
 import { CommentService } from '../services/comment.service.js';
-import { UserDatabaseService } from '../interfaces/database.interface.js';
-import { OfferDatabaseService } from '../interfaces/database.interface.js';
-import { CommentDatabaseService } from '../interfaces/database.interface.js';
+import { FavoriteService } from '../services/favorite.service.js';
+import { AuthService } from '../services/auth.service.js';
+import {
+  UserDatabaseService,
+  OfferDatabaseService,
+  CommentDatabaseService,
+  FavoriteDatabaseService
+} from '../interfaces/database.interface.js';
 
 export const container = new Container();
 
@@ -25,3 +30,5 @@ container.bind<DatabaseClient>('DatabaseClient').to(DatabaseClient).inSingletonS
 container.bind<UserDatabaseService>('UserService').to(UserService);
 container.bind<OfferDatabaseService>('OfferService').to(OfferService);
 container.bind<CommentDatabaseService>('CommentService').to(CommentService);
+container.bind<FavoriteDatabaseService>('FavoriteService').to(FavoriteService);
+container.bind<AuthService>('AuthService').to(AuthService);

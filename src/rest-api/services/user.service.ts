@@ -1,15 +1,18 @@
 import { UserModel, UserEntity } from '../models/user.model.js';
 import type { UserDocument } from '../models/user.model.js';
 import { UserDatabaseService } from '../interfaces/database.interface.js';
+import { DatabaseException } from '../exceptions/app.exception.js';
+import bcrypt from 'bcrypt';
+import { injectable } from 'inversify';
 
-
+@injectable()
 export class UserService implements UserDatabaseService {
   public async findById(id: string): Promise<UserDocument | null> {
     try {
       const result = await UserModel.findById(id).exec();
       return result as UserDocument | null;
     } catch (error) {
-      return null;
+      throw new DatabaseException('Failed to find user by id');
     }
   }
 
@@ -18,14 +21,18 @@ export class UserService implements UserDatabaseService {
       const result = await UserModel.findOne({ email }).exec();
       return result as UserDocument | null;
     } catch (error) {
-      return null;
+      throw new DatabaseException('Failed to find user by email');
     }
   }
 
   public async create(data: Partial<UserEntity>): Promise<UserDocument> {
-    const user = new UserModel(data);
-    const savedUser = await user.save();
-    return savedUser as unknown as UserDocument;
+    try {
+      const user = new UserModel(data);
+      const savedUser = await user.save();
+      return savedUser as unknown as UserDocument;
+    } catch (error) {
+      throw new DatabaseException('Failed to create user');
+    }
   }
 
   public async findAll(limit?: number): Promise<UserDocument[]> {
@@ -37,7 +44,7 @@ export class UserService implements UserDatabaseService {
       const result = await query.exec();
       return result as unknown as UserDocument[];
     } catch (error) {
-      return [];
+      throw new DatabaseException('Failed to find users');
     }
   }
 
@@ -46,7 +53,7 @@ export class UserService implements UserDatabaseService {
       const result = await UserModel.findByIdAndUpdate(id, data, { new: true }).exec();
       return result as UserDocument | null;
     } catch (error) {
-      return null;
+      throw new DatabaseException('Failed to update user');
     }
   }
 
@@ -55,7 +62,47 @@ export class UserService implements UserDatabaseService {
       const result = await UserModel.findByIdAndDelete(id).exec();
       return !!result;
     } catch (error) {
-      return false;
+      throw new DatabaseException('Failed to delete user');
+    }
+  }
+
+  public async hashPassword(password: string): Promise<string> {
+    return await bcrypt.hash(password, 10);
+  }
+
+  public async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);
+  }
+
+  public async createWithHashedPassword(userData: Partial<UserEntity>): Promise<UserDocument> {
+    if (userData.password) {
+      userData.password = await this.hashPassword(userData.password);
+    }
+    return await this.create(userData);
+  }
+
+  public async updateWithHashedPassword(id: string, userData: Partial<UserEntity>): Promise<UserDocument | null> {
+    if (userData.password) {
+      userData.password = await this.hashPassword(userData.password);
+    }
+    return await this.update(id, userData);
+  }
+
+  public async existsByEmail(email: string): Promise<boolean> {
+    try {
+      const user = await UserModel.findOne({ email }).select('_id').exec();
+      return !!user;
+    } catch (error) {
+      throw new DatabaseException('Failed to check if user exists by email');
+    }
+  }
+
+  public async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
+    try {
+      const result = await UserModel.findOne({ email }).select('+password').exec();
+      return result as UserDocument | null;
+    } catch (error) {
+      throw new DatabaseException('Failed to find user by email with password');
     }
   }
 }
