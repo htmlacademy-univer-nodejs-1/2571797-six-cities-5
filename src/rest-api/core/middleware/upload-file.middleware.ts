@@ -7,6 +7,7 @@ import { extension } from 'mime-types';
 import { nanoid } from 'nanoid';
 import { injectable } from 'inversify';
 import { Middleware } from './middleware.interface.js';
+import { BadRequestException } from '../../exceptions/app.exception.js';
 
 type RequestWithFile = Request<ParamsDictionary> & { file?: Express.Multer.File };
 
@@ -35,7 +36,17 @@ export class UploadFileMiddleware implements Middleware {
       }
     });
 
-    this.uploadMiddleware = multer({ storage }).single(this.fieldName);
+    this.uploadMiddleware = multer({
+      storage,
+      fileFilter: (_req, file, cb) => {
+        const isAllowedMime = ['image/jpeg', 'image/png'].includes(file.mimetype);
+        if (!isAllowedMime) {
+          cb(new BadRequestException('Avatar must be a .jpg or .png image'));
+          return;
+        }
+        cb(null, true);
+      }
+    }).single(this.fieldName);
   }
 
   public execute(req: Request, res: Response, next: NextFunction): void {

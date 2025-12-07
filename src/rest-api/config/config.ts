@@ -83,6 +83,28 @@ config.validate({ allowed: 'strict' });
 const salt = config.get('salt') as string;
 const jwtSecret = (config.get('jwt') as { secret: string }).secret;
 const uploadDirectory = config.get('uploadDirectory') as string;
+const requiredEnvVars = [
+  'PORT',
+  'DB_HOST',
+  'DB_PORT',
+  'DB_NAME',
+  'DB_USERNAME',
+  'DB_PASSWORD',
+  'SALT',
+  'JWT_SECRET',
+  'JWT_EXPIRES_IN',
+  'UPLOAD_DIRECTORY',
+  'LOG_LEVEL'
+];
+
+const ensureEnvVarPresent = (name: string): void => {
+  const value = process.env[name];
+  if (!value || value.trim() === '') {
+    throw new Error(`${name} environment variable is required and cannot be empty`);
+  }
+};
+
+requiredEnvVars.forEach(ensureEnvVarPresent);
 
 if (!salt || salt.trim() === '') {
   throw new Error('SALT environment variable is required and cannot be empty');

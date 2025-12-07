@@ -29,7 +29,7 @@ export class CommentController extends Controller {
     super();
     this.authService = authService;
     this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
-    this.validateCreateCommentDtoMiddleware = new ValidateDtoMiddleware(CreateCommentDto);
+    this.validateCreateCommentDtoMiddleware = new ValidateDtoMiddleware(CreateCommentDto, true);
     this.checkOfferExistsMiddleware = new DocumentExistsMiddleware<OfferDocument>(
       this.offerService,
       'offerId',

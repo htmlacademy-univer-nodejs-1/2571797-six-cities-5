@@ -1,4 +1,5 @@
 import express, { Express } from 'express';
+import cors from 'cors';
 import path from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
 import { injectable, inject } from 'inversify';
@@ -47,6 +48,7 @@ export class Application {
   }
 
   private initMiddleware(): void {
+    this.expressApp.use(cors());
     this.expressApp.use(express.json());
     const uploadDirectory = path.resolve(this.config.get('uploadDirectory') as string);
     const staticDirectory = path.resolve('markup');
