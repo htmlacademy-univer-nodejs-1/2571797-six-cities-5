@@ -7,6 +7,15 @@ import { createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 
+const PARSE_RADIX = 10;
+const MIN_USER_ID = 1;
+const MAX_USER_ID = 100;
+const MIN_AVATAR_ID = 1;
+const MAX_AVATAR_ID = 10;
+const MIN_PASSWORD_ID = 100;
+const MAX_PASSWORD_ID = 999;
+const PRO_USER_PROBABILITY = 0.2;
+
 export class GenerateCommand implements CommandInterface {
   private readonly dataGenerator = new DataGenerator();
 
@@ -22,7 +31,7 @@ export class GenerateCommand implements CommandInterface {
       return;
     }
 
-    const offerCount = parseInt(count, 10);
+    const offerCount = parseInt(count, PARSE_RADIX);
     if (isNaN(offerCount) || offerCount <= 0) {
       console.error(chalk.red('Count must be a positive number'));
       return;
@@ -51,7 +60,8 @@ export class GenerateCommand implements CommandInterface {
       const offers: MockOfferData[] = JSON.parse(response.body);
       return { offers };
     } catch (error) {
-      throw new Error(`Failed to fetch mock data from ${url}: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch mock data from ${url}: ${errorMessage}`);
     }
   }
 
@@ -70,12 +80,12 @@ export class GenerateCommand implements CommandInterface {
     });
 
     for (let i = 0; i < count; i++) {
-      const mockOffer = this.dataGenerator.getRandomElement(mockData.offers);
-      const authorName = `User${this.dataGenerator.generateRandomNumber(1, 100)}`;
-      const authorEmail = `user${this.dataGenerator.generateRandomNumber(1, 100)}@example.com`;
-      const authorAvatar = `/img/user-avatar${this.dataGenerator.generateRandomNumber(1, 10)}.png`;
-      const password = `password${this.dataGenerator.generateRandomNumber(100, 999)}`;
-      const userType = Math.random() < 0.2 ? 'pro' : 'normal';
+      const mockOffer = DataGenerator.getRandomElement(mockData.offers);
+      const authorName = `User${DataGenerator.generateRandomNumber(MIN_USER_ID, MAX_USER_ID)}`;
+      const authorEmail = `user${DataGenerator.generateRandomNumber(MIN_USER_ID, MAX_USER_ID)}@example.com`;
+      const authorAvatar = `/img/user-avatar${DataGenerator.generateRandomNumber(MIN_AVATAR_ID, MAX_AVATAR_ID)}.png`;
+      const password = `password${DataGenerator.generateRandomNumber(MIN_PASSWORD_ID, MAX_PASSWORD_ID)}`;
+      const userType = Math.random() < PRO_USER_PROBABILITY ? 'pro' : 'normal';
 
       const generatedOffer = this.dataGenerator.generateOfferFromMock(mockOffer, authorName, authorEmail, authorAvatar, password, userType);
 

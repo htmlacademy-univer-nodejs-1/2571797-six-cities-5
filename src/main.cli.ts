@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { CLIApplication, HelpCommand, VersionCommand, ImportCommand, GenerateCommand } from './cli/index.js';
+import { CLIApplication, HelpCommand, VersionCommand, ImportCommand, GenerateCommand } from './cli';
 
 async function bootstrap() {
   const cliApplication = new CLIApplication();
@@ -14,4 +14,7 @@ async function bootstrap() {
   await cliApplication.processCommand(process.argv);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to start CLI:', error);
+  throw error;
+});

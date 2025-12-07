@@ -4,8 +4,7 @@ import asyncHandler from 'express-async-handler';
 import { Types } from 'mongoose';
 import { Controller } from '../../core/controller/controller.abstract.js';
 import { OfferDatabaseService } from '../../interfaces/database.interface.js';
-import { CreateOfferDto } from '../../dto/create-offer.dto.js';
-import { UpdateOfferDto } from '../../dto/update-offer.dto.js';
+import { CreateOfferDto, UpdateOfferDto } from '../../dto';
 import { transformOfferToListItem, transformOfferToResponse } from '../../utils/response-transformers.js';
 import { NotFoundException, ForbiddenException, UnauthorizedException } from '../../exceptions/app.exception.js';
 import { AuthService } from '../../services/auth.service.js';
@@ -15,6 +14,10 @@ import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objec
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
 import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
+
+const DEFAULT_OFFERS_LIMIT = 60;
+const PREMIUM_OFFERS_LIMIT = 3;
+const PARSE_RADIX = 10;
 
 @injectable()
 export class OfferController extends Controller {
@@ -79,7 +82,7 @@ export class OfferController extends Controller {
   }
 
   private async index(req: Request, res: Response): Promise<void> {
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 60;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, PARSE_RADIX) : DEFAULT_OFFERS_LIMIT;
     const userId = await this.getUserIdFromRequest(req);
 
     const offers = await this.offerService.findAllWithFavorites(userId, limit);
@@ -137,11 +140,7 @@ export class OfferController extends Controller {
     const userId = await this.getUserIdFromRequest(req, true);
     const offer = res.locals.offer as OfferDocument;
 
-    const author = offer.author as UserDocument;
-    const offerAuthorId = author._id?.toString() || (offer.author as unknown as { toString(): string }).toString();
-    if (offerAuthorId !== userId) {
-      throw new ForbiddenException();
-    }
+    this.ensureOfferOwner(offer, userId);
 
     const dto = req.body as UpdateOfferDto;
     const updatedOffer = await this.offerService.update(offerId, dto);
@@ -161,21 +160,26 @@ export class OfferController extends Controller {
     const userId = await this.getUserIdFromRequest(req, true);
     const offer = res.locals.offer as OfferDocument;
 
-    const author = offer.author as UserDocument;
-    const offerAuthorId = author._id?.toString() || (offer.author as unknown as { toString(): string }).toString();
-    if (offerAuthorId !== userId) {
-      throw new ForbiddenException();
-    }
+    this.ensureOfferOwner(offer, userId);
 
     await this.offerService.delete(offerId);
     this.noContent(res);
+  }
+
+  private ensureOfferOwner(offer: OfferDocument, userId: string | undefined): void {
+    const author = offer.author as UserDocument;
+    const offerAuthorId = author._id?.toString() || (offer.author as unknown as { toString(): string }).toString();
+
+    if (offerAuthorId !== userId) {
+      throw new ForbiddenException();
+    }
   }
 
   private async getPremium(req: Request, res: Response): Promise<void> {
     const { city } = req.params;
     const userId = await this.getUserIdFromRequest(req);
 
-    const offers = await this.offerService.findPremiumByCityWithFavorites(city, userId, 3);
+    const offers = await this.offerService.findPremiumByCityWithFavorites(city, userId, PREMIUM_OFFERS_LIMIT);
     const offersResponse = offers.map((offer) => {
       const isFavorite = userId ? ((offer as OfferDocument & { isFavorite?: boolean }).isFavorite || false) : false;
       return transformOfferToListItem(offer, isFavorite);

@@ -1,8 +1,11 @@
-import { CommentModel, CommentEntity } from '../models/comment.model.js';
-import type { CommentDocument } from '../models/comment.model.js';
-import { CommentDatabaseService, OfferDatabaseService } from '../interfaces/database.interface.js';
-import { DatabaseException } from '../exceptions/app.exception.js';
-import { injectable, inject } from 'inversify';
+import type {CommentDocument} from '../models/comment.model.js';
+import {CommentEntity, CommentModel} from '../models/comment.model.js';
+import {CommentDatabaseService, OfferDatabaseService} from '../interfaces/database.interface.js';
+import {DatabaseException} from '../exceptions/app.exception.js';
+import {inject, injectable} from 'inversify';
+
+const DEFAULT_COMMENTS_LIMIT = 50;
+const RATING_ROUNDING_FACTOR = 10;
 
 @injectable()
 export class CommentService implements CommentDatabaseService {
@@ -48,8 +51,7 @@ export class CommentService implements CommentDatabaseService {
         query = query.limit(limit);
       }
 
-      const result = await query.exec();
-      return result;
+      return await query.exec();
     } catch (error) {
       throw new DatabaseException('Failed to find comments');
     }
@@ -86,14 +88,13 @@ export class CommentService implements CommentDatabaseService {
     }
   }
 
-  public async findByOfferId(offerId: string, limit = 50): Promise<CommentDocument[]> {
+  public async findByOfferId(offerId: string, limit = DEFAULT_COMMENTS_LIMIT): Promise<CommentDocument[]> {
     try {
-      const result = await CommentModel.find({ offer: offerId })
+      return await CommentModel.find({offer: offerId})
         .populate('author')
-        .sort({ postDate: -1 })
+        .sort({postDate: -1})
         .limit(limit)
         .exec();
-      return result;
     } catch (error) {
       throw new DatabaseException('Failed to find comments by offer id');
     }
@@ -118,7 +119,7 @@ export class CommentService implements CommentDatabaseService {
       const totalRating = comments.reduce((sum, comment) => sum + comment.rating, 0);
       const averageRating = totalRating / comments.length;
 
-      return Math.round(averageRating * 10) / 10;
+      return Math.round(averageRating * RATING_ROUNDING_FACTOR) / RATING_ROUNDING_FACTOR;
     } catch (error) {
       throw new DatabaseException('Failed to get average rating');
     }

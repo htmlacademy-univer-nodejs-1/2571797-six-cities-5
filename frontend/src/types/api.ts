@@ -46,3 +46,4 @@ export type ApiComment = {
 export type LoginResponse = {
   token: string;
 };
+

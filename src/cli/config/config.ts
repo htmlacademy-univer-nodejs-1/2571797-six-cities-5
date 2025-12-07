@@ -28,13 +28,13 @@ export const config = convict({
     username: {
       doc: 'Database username',
       format: String,
-      default: 'admin',
+      default: '',
       env: 'DB_USERNAME'
     },
     password: {
       doc: 'Database password',
       format: String,
-      default: 'password123',
+      default: '',
       env: 'DB_PASSWORD'
     }
   }

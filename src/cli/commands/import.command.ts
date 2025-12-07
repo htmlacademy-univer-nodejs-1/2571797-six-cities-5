@@ -113,7 +113,8 @@ export class ImportCommand implements CommandInterface {
           importedOffers++;
 
         } catch (error) {
-          console.warn(chalk.yellow(`Warning: Failed to import offer "${offer.title}": ${error}`));
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn(chalk.yellow(`Warning: Failed to import offer "${offer.title}": ${errorMessage}`));
         }
       }
 

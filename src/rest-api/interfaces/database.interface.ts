@@ -34,7 +34,8 @@ export interface OfferDatabaseService extends DatabaseService<OfferDocument, Off
   findFavoritesByUserId(userId: string): Promise<OfferDocument[]>;
   addToFavorites(userId: string, offerId: string): Promise<boolean>;
   removeFromFavorites(userId: string, offerId: string): Promise<boolean>;
-  isFavorite(userId: string, offerId: string): Promise<boolean>;
+
+  isFavorite(userId: string | undefined, offerId: string): Promise<boolean>;
   findAllWithFavorites(userId?: string, limit?: number): Promise<OfferDocument[]>;
   findByIdWithFavorites(id: string, userId?: string): Promise<OfferDocument | null>;
   findPremiumByCityWithFavorites(city: string, userId?: string, limit?: number): Promise<OfferDocument[]>;
