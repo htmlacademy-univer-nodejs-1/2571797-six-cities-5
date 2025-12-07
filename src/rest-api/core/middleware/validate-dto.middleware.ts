@@ -7,7 +7,10 @@ import { ValidationException } from '../../exceptions/app.exception.js';
 
 @injectable()
 export class ValidateDtoMiddleware implements Middleware {
-  constructor(private readonly dtoClass: ClassConstructor<object>) {}
+  constructor(
+    private readonly dtoClass: ClassConstructor<object>,
+    private readonly requireAllFields = false
+  ) {}
 
   public async execute(req: Request, _res: Response, next: NextFunction): Promise<void> {
     const dto = plainToInstance(this.dtoClass, req.body, {
@@ -15,7 +18,7 @@ export class ValidateDtoMiddleware implements Middleware {
       excludeExtraneousValues: false
     });
     const errors = await validate(dto, {
-      skipMissingProperties: true,
+      skipMissingProperties: !this.requireAllFields,
       whitelist: false,
       forbidNonWhitelisted: false
     });

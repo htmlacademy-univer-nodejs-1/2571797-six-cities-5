@@ -5,6 +5,7 @@
 /dist/
 /upload/
 /docs/
+.env
 .idea/*
 
 .DS_Store

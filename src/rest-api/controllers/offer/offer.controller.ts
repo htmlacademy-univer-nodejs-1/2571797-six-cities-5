@@ -31,8 +31,8 @@ export class OfferController extends Controller {
     super();
     this.authService = authService;
     this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
-    this.validateCreateOfferDtoMiddleware = new ValidateDtoMiddleware(CreateOfferDto);
-    this.validateUpdateOfferDtoMiddleware = new ValidateDtoMiddleware(UpdateOfferDto);
+    this.validateCreateOfferDtoMiddleware = new ValidateDtoMiddleware(CreateOfferDto, true);
+    this.validateUpdateOfferDtoMiddleware = new ValidateDtoMiddleware(UpdateOfferDto, false);
     this.checkOfferExistsMiddleware = new DocumentExistsMiddleware<OfferDocument>(
       this.offerService,
       'offerId',

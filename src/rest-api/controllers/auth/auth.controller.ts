@@ -9,7 +9,7 @@ import { CreateUserDto } from '../../dto/create-user.dto.js';
 import { LoginUserDto } from '../../dto/login-user.dto.js';
 import { transformUserToResponse } from '../../utils/response-transformers.js';
 import { LoginResponse } from '../../types/response.types.js';
-import { UnauthorizedException, BadRequestException, NotFoundException } from '../../exceptions/app.exception.js';
+import { UnauthorizedException, BadRequestException, NotFoundException, ForbiddenException } from '../../exceptions/app.exception.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 import { UploadFileMiddleware } from '../../core/middleware/upload-file.middleware.js';
 import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
@@ -36,8 +36,8 @@ export class AuthController extends Controller {
   ) {
     super();
     this.authService = authService;
-    this.validateCreateUserDtoMiddleware = new ValidateDtoMiddleware(CreateUserDto);
-    this.validateLoginUserDtoMiddleware = new ValidateDtoMiddleware(LoginUserDto);
+    this.validateCreateUserDtoMiddleware = new ValidateDtoMiddleware(CreateUserDto, true);
+    this.validateLoginUserDtoMiddleware = new ValidateDtoMiddleware(LoginUserDto, true);
     this.uploadAvatarMiddleware = new UploadFileMiddleware(
       this.config.get('uploadDirectory') as string,
       'avatar'
@@ -74,6 +74,11 @@ export class AuthController extends Controller {
   }
 
   private async register(req: Request, res: Response): Promise<void> {
+    const existingUserId = await this.getUserIdFromRequest(req);
+    if (existingUserId) {
+      throw new ForbiddenException('Already authenticated');
+    }
+
     const dto = req.body as CreateUserDto;
     const user = await this.authService.register(dto);
     const userResponse = transformUserToResponse(user);
