@@ -1,9 +1,12 @@
-import { OfferModel, OfferEntity } from '../models/offer.model.js';
-import type { OfferDocument } from '../models/offer.model.js';
-import { OfferDatabaseService, FavoriteDatabaseService } from '../interfaces/database.interface.js';
-import { CommentModel } from '../models/comment.model.js';
-import { NotFoundException, DatabaseException } from '../exceptions/app.exception.js';
-import { injectable, inject } from 'inversify';
+import type {OfferDocument} from '../models/offer.model.js';
+import {OfferEntity, OfferModel} from '../models/offer.model.js';
+import {FavoriteDatabaseService, OfferDatabaseService} from '../interfaces/database.interface.js';
+import {CommentModel} from '../models/comment.model.js';
+import {DatabaseException, NotFoundException} from '../exceptions/app.exception.js';
+import {inject, injectable} from 'inversify';
+
+const PREMIUM_OFFERS_LIMIT = 3;
+const RATING_ROUNDING_FACTOR = 10;
 
 @injectable()
 export class OfferService implements OfferDatabaseService {
@@ -84,7 +87,7 @@ export class OfferService implements OfferDatabaseService {
     }
   }
 
-  public async findPremiumByCity(city: string, limit = 3): Promise<OfferDocument[]> {
+  public async findPremiumByCity(city: string, limit = PREMIUM_OFFERS_LIMIT): Promise<OfferDocument[]> {
     try {
       const result = await OfferModel.find({ city, isPremium: true })
         .populate('author')
@@ -116,7 +119,7 @@ export class OfferService implements OfferDatabaseService {
 
       const totalRating = comments.reduce((sum: number, comment) => sum + comment.rating, 0);
       const averageRating = totalRating / comments.length;
-      const roundedRating = Math.round(averageRating * 10) / 10;
+      const roundedRating = Math.round(averageRating * RATING_ROUNDING_FACTOR) / RATING_ROUNDING_FACTOR;
 
       await OfferModel.findByIdAndUpdate(offerId, { rating: roundedRating });
     } catch (error) {
@@ -166,7 +169,11 @@ export class OfferService implements OfferDatabaseService {
     return await this.favoriteService.removeFromFavorites(userId, offerId);
   }
 
-  public async isFavorite(userId: string, offerId: string): Promise<boolean> {
+  public async isFavorite(userId: string | undefined, offerId: string): Promise<boolean> {
+    if (!userId) {
+      return false;
+    }
+
     try {
       const favorite = await this.favoriteService.findByUserAndOffer(userId, offerId);
       return !!favorite;
@@ -212,8 +219,7 @@ export class OfferService implements OfferDatabaseService {
       const result = offer as OfferDocument;
 
       if (userId) {
-        const isFavorite = await this.isFavorite(userId, id);
-        (result as OfferDocument & { isFavorite: boolean }).isFavorite = isFavorite;
+        (result as OfferDocument & { isFavorite: boolean }).isFavorite = await this.isFavorite(userId, id);
       }
 
       return result;
@@ -222,7 +228,7 @@ export class OfferService implements OfferDatabaseService {
     }
   }
 
-  public async findPremiumByCityWithFavorites(city: string, userId?: string, limit = 3): Promise<OfferDocument[]> {
+  public async findPremiumByCityWithFavorites(city: string, userId?: string, limit = PREMIUM_OFFERS_LIMIT): Promise<OfferDocument[]> {
     try {
       const offers = await OfferModel.find({ city, isPremium: true })
         .populate('author')

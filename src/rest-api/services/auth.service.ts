@@ -1,13 +1,9 @@
-import { UserDocument } from '../models/user.model.js';
-import { UserType } from '../../shared/types/user-type.enum.js';
-import { UserDatabaseService } from '../interfaces/database.interface.js';
-import {
-  UnauthorizedException,
-  ConflictException,
-  DatabaseException
-} from '../exceptions/app.exception.js';
+import {UserDocument} from '../models/user.model.js';
+import {UserType} from '../../shared/types/user-type.enum.js';
+import {UserDatabaseService} from '../interfaces/database.interface.js';
+import {ConflictException, DatabaseException, UnauthorizedException} from '../exceptions/app.exception.js';
 import jwt from 'jsonwebtoken';
-import { injectable, inject } from 'inversify';
+import {inject, injectable} from 'inversify';
 
 export interface LoginData {
   email: string;
@@ -50,12 +46,10 @@ export class AuthService {
         throw new ConflictException('User with this email already exists');
       }
 
-      const newUser = await this.userService.createWithHashedPassword({
+      return await this.userService.createWithHashedPassword({
         ...userData,
         type: userData.type || UserType.Normal,
       });
-
-      return newUser;
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
@@ -101,8 +95,7 @@ export class AuthService {
 
   public async verifyToken(token: string): Promise<{ userId: string; email: string } | null> {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret) as { userId: string; email: string };
-      return decoded;
+      return jwt.verify(token, this.jwtSecret) as { userId: string; email: string };
     } catch (error) {
       return null;
     }
@@ -115,21 +108,9 @@ export class AuthService {
         return null;
       }
 
-      const user = await this.userService.findById(decoded.userId);
-      return user;
+      return await this.userService.findById(decoded.userId);
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
-    }
-  }
-
-  public async checkAuth(token: string): Promise<UserDocument | null> {
-    try {
-      return await this.getUserByToken(token);
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Authentication failed');
     }
   }
 }

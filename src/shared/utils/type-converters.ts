@@ -1,7 +1,4 @@
-import { City } from '../types/city.enum.js';
-import { HousingType } from '../types/housing-type.enum.js';
-import { ComfortType } from '../types/comfort-type.enum.js';
-import { UserType } from '../types/user-type.enum.js';
+import { City, HousingType, ComfortType, UserType } from '../types';
 
 export function stringToCity(value: string): City {
   const normalizedValue = value.toLowerCase();
@@ -66,14 +63,6 @@ export function stringsToComfortTypes(values: string[]): ComfortType[] {
   });
 }
 
-export function stringToComfortTypes(value: string): ComfortType[] {
-  const comfortStrings = value.split(',').map((s) => s.trim());
-  return stringsToComfortTypes(comfortStrings);
-}
-
-/**
- * Безопасно преобразует строку в UserType enum
- */
 export function stringToUserType(value: string): UserType {
   const normalizedValue = value.toLowerCase();
 

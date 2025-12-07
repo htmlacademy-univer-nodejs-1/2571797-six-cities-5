@@ -1,17 +1,22 @@
 import {FileReader} from './file-reader.interface.js';
 import {createReadStream} from 'node:fs';
 import {createInterface} from 'node:readline';
-import {Offer} from '../../types/index.js';
+import {Offer} from '../../types';
 import { stringToCity, stringToHousingType, stringsToComfortTypes, stringToUserType } from '../../utils/type-converters.js';
+
+const REQUIRED_FIELDS_COUNT = 21;
+const HEADER_LINE_NUMBER = 1;
+const DEFAULT_COMMENTS_COUNT = 0;
 
 export class TSVFileReader implements FileReader {
   constructor(
     private readonly filename: string
-  ) {}
+  ) {
+  }
 
   public async readOffers(): Promise<Offer[]> {
     const offers: Offer[] = [];
-    const fileStream = createReadStream(this.filename, { encoding: 'utf-8' });
+    const fileStream = createReadStream(this.filename, {encoding: 'utf-8'});
     const rl = createInterface({
       input: fileStream,
       crlfDelay: Infinity
@@ -25,7 +30,7 @@ export class TSVFileReader implements FileReader {
         continue;
       }
 
-      if (lineNumber === 1 && line.includes('title\tdescription')) {
+      if (lineNumber === HEADER_LINE_NUMBER && line.includes('title\tdescription')) {
         continue;
       }
 
@@ -33,8 +38,8 @@ export class TSVFileReader implements FileReader {
         const offer = this.parseLine(line, lineNumber);
         offers.push(offer);
       } catch (error) {
-        console.warn(`Warning: Failed to parse line ${lineNumber}: ${error}`);
-        continue;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn(`Warning: Failed to parse line ${lineNumber}: ${errorMessage}`);
       }
     }
 
@@ -44,8 +49,8 @@ export class TSVFileReader implements FileReader {
   private parseLine(line: string, _lineNumber: number): Offer {
     const fields = line.split('\t');
 
-    if (fields.length < 21) {
-      throw new Error(`Invalid TSV format: expected 21 fields, got ${fields.length}`);
+    if (fields.length < REQUIRED_FIELDS_COUNT) {
+      throw new Error(`Invalid TSV format: expected ${REQUIRED_FIELDS_COUNT} fields, got ${fields.length}`);
     }
 
     const [
@@ -77,7 +82,7 @@ export class TSVFileReader implements FileReader {
         password,
         type: stringToUserType(type)
       },
-      commentsCount: 0,
+      commentsCount: DEFAULT_COMMENTS_COUNT,
       location: {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude)

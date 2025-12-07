@@ -4,7 +4,7 @@ import asyncHandler from 'express-async-handler';
 import { Types } from 'mongoose';
 import { Controller } from '../../core/controller/controller.abstract.js';
 import { CommentDatabaseService, OfferDatabaseService } from '../../interfaces/database.interface.js';
-import { CreateCommentDto } from '../../dto/create-comment.dto.js';
+import { CreateCommentDto } from '../../dto';
 import { transformCommentToResponse } from '../../utils/response-transformers.js';
 import { NotFoundException, UnauthorizedException } from '../../exceptions/app.exception.js';
 import { AuthService } from '../../services/auth.service.js';
@@ -13,6 +13,8 @@ import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middle
 import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
 import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
 import { OfferDocument } from '../../models/offer.model.js';
+
+const DEFAULT_COMMENTS_LIMIT = 50;
 
 @injectable()
 export class CommentController extends Controller {
@@ -63,7 +65,7 @@ export class CommentController extends Controller {
   private async index(req: Request, res: Response): Promise<void> {
     const { offerId } = req.params;
 
-    const comments = await this.commentService.findByOfferId(offerId, 50);
+    const comments = await this.commentService.findByOfferId(offerId, DEFAULT_COMMENTS_LIMIT);
     const commentsResponse = comments.map((comment) => transformCommentToResponse(comment));
 
     this.ok(res, commentsResponse);

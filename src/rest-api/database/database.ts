@@ -43,9 +43,5 @@ export class DatabaseClient {
       throw error;
     }
   }
-
-  public isConnected(): boolean {
-    return mongoose.connection.readyState === 1;
-  }
 }
 

@@ -5,6 +5,20 @@ import convictFormatWithValidator from 'convict-format-with-validator';
 convict.addFormat(convictFormatWithValidator.ipaddress);
 convict.addFormat(convictFormatWithValidator.url);
 
+const REQUIRED_ENV_VARS = [
+  'PORT',
+  'DB_HOST',
+  'DB_PORT',
+  'DB_NAME',
+  'DB_USERNAME',
+  'DB_PASSWORD',
+  'SALT',
+  'JWT_SECRET',
+  'JWT_EXPIRES_IN',
+  'UPLOAD_DIRECTORY',
+  'LOG_LEVEL'
+];
+
 export const config = convict({
   port: {
     doc: 'The port to bind.',
@@ -34,13 +48,13 @@ export const config = convict({
     username: {
       doc: 'Database username',
       format: String,
-      default: 'admin',
+      default: '',
       env: 'DB_USERNAME'
     },
     password: {
       doc: 'Database password',
       format: String,
-      default: 'password123',
+      default: '',
       env: 'DB_PASSWORD'
     }
   },
@@ -80,23 +94,6 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' });
 
-const salt = config.get('salt') as string;
-const jwtSecret = (config.get('jwt') as { secret: string }).secret;
-const uploadDirectory = config.get('uploadDirectory') as string;
-const requiredEnvVars = [
-  'PORT',
-  'DB_HOST',
-  'DB_PORT',
-  'DB_NAME',
-  'DB_USERNAME',
-  'DB_PASSWORD',
-  'SALT',
-  'JWT_SECRET',
-  'JWT_EXPIRES_IN',
-  'UPLOAD_DIRECTORY',
-  'LOG_LEVEL'
-];
-
 const ensureEnvVarPresent = (name: string): void => {
   const value = process.env[name];
   if (!value || value.trim() === '') {
@@ -104,7 +101,11 @@ const ensureEnvVarPresent = (name: string): void => {
   }
 };
 
-requiredEnvVars.forEach(ensureEnvVarPresent);
+REQUIRED_ENV_VARS.forEach(ensureEnvVarPresent);
+
+const salt = config.get('salt') as string;
+const jwtSecret = (config.get('jwt') as { secret: string }).secret;
+const uploadDirectory = config.get('uploadDirectory') as string;
 
 if (!salt || salt.trim() === '') {
   throw new Error('SALT environment variable is required and cannot be empty');

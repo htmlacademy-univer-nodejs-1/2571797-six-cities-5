@@ -1,13 +1,13 @@
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
-import multer, { StorageEngine } from 'multer';
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import type { ParamsDictionary } from 'express-serve-static-core';
-import { extension } from 'mime-types';
-import { nanoid } from 'nanoid';
-import { injectable } from 'inversify';
-import { Middleware } from './middleware.interface.js';
-import { BadRequestException } from '../../exceptions/app.exception.js';
+import {promises as fs} from 'node:fs';
+import multer, {StorageEngine} from 'multer';
+import {NextFunction, Request, RequestHandler, Response} from 'express';
+import type {ParamsDictionary} from 'express-serve-static-core';
+import {extension} from 'mime-types';
+import {nanoid} from 'nanoid';
+import {injectable} from 'inversify';
+import {Middleware} from './middleware.interface.js';
+import {BadRequestException} from '../../exceptions/app.exception.js';
 
 type RequestWithFile = Request<ParamsDictionary> & { file?: Express.Multer.File };
 
@@ -22,17 +22,18 @@ export class UploadFileMiddleware implements Middleware {
     this.publicPath = publicPath;
 
     const storage: StorageEngine = multer.diskStorage({
-      destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) =>
-        fs
-          .mkdir(this.uploadDirectory, { recursive: true })
-          .then(() => cb(null, this.uploadDirectory))
-          .catch((error) => {
-            const uploadError = error instanceof Error ? error : new Error('Failed to prepare upload directory');
-            cb(uploadError, this.uploadDirectory);
-          }),
+      destination: async (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+        try {
+          await fs.mkdir(this.uploadDirectory, { recursive: true });
+          return cb(null, this.uploadDirectory);
+        } catch (error) {
+          const uploadError = error instanceof Error ? error : new Error('Failed to prepare upload directory');
+          return cb(uploadError, this.uploadDirectory);
+        }
+      },
       filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
         const fileExtension = this.getFileExtension(file);
-        cb(null, `${nanoid()}.${fileExtension}`);
+        return cb(null, `${nanoid()}.${fileExtension}`);
       }
     });
 
@@ -41,10 +42,9 @@ export class UploadFileMiddleware implements Middleware {
       fileFilter: (_req, file, cb) => {
         const isAllowedMime = ['image/jpeg', 'image/png'].includes(file.mimetype);
         if (!isAllowedMime) {
-          cb(new BadRequestException('Avatar must be a .jpg or .png image'));
-          return;
+          return cb(new BadRequestException('Avatar must be a .jpg or .png image'));
         }
-        cb(null, true);
+        return cb(null, true);
       }
     }).single(this.fieldName);
   }
@@ -58,8 +58,7 @@ export class UploadFileMiddleware implements Middleware {
       }
 
       if (requestWithFile.file) {
-        const publicFilePath = path.posix.join(this.publicPath, requestWithFile.file.filename);
-        res.locals.uploadedFilePath = publicFilePath;
+        res.locals.uploadedFilePath = path.posix.join(this.publicPath, requestWithFile.file.filename);
       }
 
       next();

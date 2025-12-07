@@ -1,54 +1,74 @@
 import { MockOfferData, GeneratedOffer } from '../../types/mock-data.type.js';
-import { City } from '../../types/city.enum.js';
-import { HousingType } from '../../types/housing-type.enum.js';
-import { ComfortType } from '../../types/comfort-type.enum.js';
+import { City, HousingType, ComfortType } from '../../types';
+
+const DEFAULT_DECIMALS = 1;
+const START_YEAR = 2020;
+const START_MONTH = 0;
+const START_DAY = 1;
+const RANDOM_SORT_THRESHOLD = 0.5;
+
+const enum OfferLimits {
+  MinRooms = 1,
+  MaxRooms = 8,
+  MinGuests = 1,
+  MaxGuests = 10,
+  MinPrice = 100,
+  MaxPrice = 100000,
+  MinRating = 1,
+  MaxRating = 5
+}
+
+const enum Probability {
+  Premium = 0.3,
+  Favorite = 0.2
+}
 
 export class DataGenerator {
   private readonly cities = Object.values(City);
   private readonly housingTypes = Object.values(HousingType);
   private readonly comforts = Object.values(ComfortType);
 
-  public generateRandomNumber(min: number, max: number): number {
+  public static generateRandomNumber(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  public generateRandomFloat(min: number, max: number, decimals = 1): number {
+  public static generateRandomFloat(min: number, max: number, decimals = DEFAULT_DECIMALS): number {
     return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
   }
 
-  public getRandomElement<T>(array: T[]): T {
+  public static getRandomElement<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)];
   }
 
-  public generateRandomDate(): string {
-    const start = new Date(2020, 0, 1);
+  public static generateRandomDate(): string {
+    const start = new Date(START_YEAR, START_MONTH, START_DAY);
     const end = new Date();
     const randomTime = start.getTime() + Math.random() * (end.getTime() - start.getTime());
     return new Date(randomTime).toISOString();
   }
 
   public generateRandomComforts(): string[] {
-    const count = this.generateRandomNumber(1, this.comforts.length);
-    const shuffled = [...this.comforts].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count) as string[];
+    const count = DataGenerator.generateRandomNumber(1, this.comforts.length);
+    const shuffledComforts = [...this.comforts].sort(() => RANDOM_SORT_THRESHOLD - Math.random());
+    return shuffledComforts.slice(0, count) as string[];
   }
 
   public generateOfferFromMock(mockData: MockOfferData, authorName: string, authorEmail: string, authorAvatar: string, password: string, userType: string): GeneratedOffer {
-    const city = this.getRandomElement(this.cities) as string;
-    const housingType = this.getRandomElement(this.housingTypes) as string;
-    const rooms = this.generateRandomNumber(1, 8);
-    const guests = this.generateRandomNumber(1, 10);
-    const price = this.generateRandomNumber(100, 100000);
-    const rating = this.generateRandomFloat(1, 5);
-    const isPremium = Math.random() < 0.3;
-    const isFavorite = Math.random() < 0.2;
+    const city = DataGenerator.getRandomElement(this.cities) as string;
+    const housingType = DataGenerator.getRandomElement(this.housingTypes) as string;
+    const rooms = DataGenerator.generateRandomNumber(OfferLimits.MinRooms, OfferLimits.MaxRooms);
+    const guests = DataGenerator.generateRandomNumber(OfferLimits.MinGuests, OfferLimits.MaxGuests);
+    const price = DataGenerator.generateRandomNumber(OfferLimits.MinPrice, OfferLimits.MaxPrice);
+    const rating = DataGenerator.generateRandomFloat(OfferLimits.MinRating, OfferLimits.MaxRating);
+    const isPremium = Math.random() < Probability.Premium;
+    const isFavorite = Math.random() < Probability.Favorite;
 
     const cityCoordinates = this.getCityCoordinates(city);
 
     return {
       title: mockData.title,
       description: mockData.description,
-      date: this.generateRandomDate(),
+      date: DataGenerator.generateRandomDate(),
       city,
       previewImage: mockData.previewImage,
       images: mockData.images.join(';'),
