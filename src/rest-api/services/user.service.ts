@@ -3,10 +3,23 @@ import type { UserDocument } from '../models/user.model.js';
 import { UserDatabaseService } from '../interfaces/database.interface.js';
 import { DatabaseException } from '../exceptions/app.exception.js';
 import bcrypt from 'bcrypt';
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
+
+interface Config {
+  get(key: string): string | number | object;
+}
 
 @injectable()
 export class UserService implements UserDatabaseService {
+  private readonly salt: string;
+  private readonly saltRounds = 10;
+
+  constructor(
+    @inject('Config') private readonly config: Config
+  ) {
+    this.salt = (this.config.get('salt') as string) || '';
+  }
+
   public async findById(id: string): Promise<UserDocument | null> {
     try {
       const result = await UserModel.findById(id).exec();
@@ -67,11 +80,11 @@ export class UserService implements UserDatabaseService {
   }
 
   public async hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, 10);
+    return await bcrypt.hash(`${password}${this.salt}`, this.saltRounds);
   }
 
   public async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-    return await bcrypt.compare(password, hashedPassword);
+    return await bcrypt.compare(`${password}${this.salt}`, hashedPassword);
   }
 
   public async createWithHashedPassword(userData: Partial<UserEntity>): Promise<UserDocument> {
