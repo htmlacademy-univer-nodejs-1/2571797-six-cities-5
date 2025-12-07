@@ -60,6 +60,8 @@ export class OfferService implements OfferDatabaseService {
 
   public async delete(id: string): Promise<boolean> {
     try {
+      await CommentModel.deleteMany({ offer: id }).exec();
+
       const result = await OfferModel.findByIdAndDelete(id).exec();
       return !!result;
     } catch (error) {

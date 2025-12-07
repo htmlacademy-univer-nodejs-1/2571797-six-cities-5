@@ -17,6 +17,12 @@ export class ValidationException extends AppException {
   }
 }
 
+export class BadRequestException extends AppException {
+  constructor(message = 'Bad Request') {
+    super(message, 400);
+  }
+}
+
 export class NotFoundException extends AppException {
   constructor(message = 'Resource not found') {
     super(message, 404);

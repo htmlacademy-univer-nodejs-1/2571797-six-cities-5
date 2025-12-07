@@ -26,8 +26,7 @@ export class CommentEntity {
   @prop({
     required: true,
     min: 1,
-    max: 5,
-    set: (val: number) => Math.round(val * 10) / 10
+    max: 5
   })
   public rating!: number;
 
