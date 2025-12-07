@@ -1,4 +1,6 @@
 import express, { Express } from 'express';
+import path from 'node:path';
+import { existsSync, mkdirSync } from 'node:fs';
 import { injectable, inject } from 'inversify';
 import { Logger } from 'pino';
 import { ExceptionFilter } from './exception-filter/exception-filter.js';
@@ -46,6 +48,13 @@ export class Application {
 
   private initMiddleware(): void {
     this.expressApp.use(express.json());
+    const uploadDirectory = path.resolve(this.config.get('uploadDirectory') as string);
+    const staticDirectory = path.resolve('markup');
+
+    this.ensureDirectoryExists(uploadDirectory);
+
+    this.expressApp.use('/upload', express.static(uploadDirectory));
+    this.expressApp.use('/', express.static(staticDirectory));
   }
 
   private initRoutes(): void {
@@ -57,5 +66,11 @@ export class Application {
 
   private initExceptionFilter(): void {
     this.expressApp.use(this.exceptionFilter.catch.bind(this.exceptionFilter));
+  }
+
+  private ensureDirectoryExists(directoryPath: string): void {
+    if (!existsSync(directoryPath)) {
+      mkdirSync(directoryPath, { recursive: true });
+    }
   }
 }

@@ -7,10 +7,13 @@ import { transformOfferToListItem } from '../../utils/response-transformers.js';
 import { UnauthorizedException } from '../../exceptions/app.exception.js';
 import { AuthService } from '../../services/auth.service.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
+import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
+import { OfferDocument } from '../../models/offer.model.js';
 
 @injectable()
 export class FavoriteController extends Controller {
   private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
+  private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
 
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
@@ -19,6 +22,12 @@ export class FavoriteController extends Controller {
     super();
     this.authService = authService;
     this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
+    this.checkOfferExistsMiddleware = new DocumentExistsMiddleware<OfferDocument>(
+      this.offerService,
+      'offerId',
+      'offer',
+      'Offer not found'
+    );
   }
 
   public getRouter(): Router {
@@ -28,11 +37,13 @@ export class FavoriteController extends Controller {
     router.post(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.create.bind(this))
     );
     router.delete(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.delete.bind(this))
     );
 

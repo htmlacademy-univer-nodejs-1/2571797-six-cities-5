@@ -10,11 +10,14 @@ import { NotFoundException, UnauthorizedException } from '../../exceptions/app.e
 import { AuthService } from '../../services/auth.service.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
+import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
+import { OfferDocument } from '../../models/offer.model.js';
 
 @injectable()
 export class CommentController extends Controller {
   private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
   private readonly validateCreateCommentDtoMiddleware: ValidateDtoMiddleware;
+  private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
 
   constructor(
     @inject('CommentService') private readonly commentService: CommentDatabaseService,
@@ -25,6 +28,12 @@ export class CommentController extends Controller {
     this.authService = authService;
     this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
     this.validateCreateCommentDtoMiddleware = new ValidateDtoMiddleware(CreateCommentDto);
+    this.checkOfferExistsMiddleware = new DocumentExistsMiddleware<OfferDocument>(
+      this.offerService,
+      'offerId',
+      'offer',
+      'Offer not found'
+    );
   }
 
   public getRouter(): Router {
@@ -33,12 +42,14 @@ export class CommentController extends Controller {
     router.get(
       '/:offerId/comments',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.index.bind(this))
     );
     router.post(
       '/:offerId/comments',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
       asyncHandler(this.validateCreateCommentDtoMiddleware.execute.bind(this.validateCreateCommentDtoMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.create.bind(this))
     );
 
@@ -48,11 +59,6 @@ export class CommentController extends Controller {
   private async index(req: Request, res: Response): Promise<void> {
     const { offerId } = req.params;
 
-    const offer = await this.offerService.findById(offerId);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
-
     const comments = await this.commentService.findByOfferId(offerId, 50);
     const commentsResponse = comments.map((comment) => transformCommentToResponse(comment));
 
@@ -60,23 +66,18 @@ export class CommentController extends Controller {
   }
 
   private async create(req: Request, res: Response): Promise<void> {
-    const { offerId } = req.params;
     const userId = await this.getUserIdFromRequest(req, true);
+    const offer = res.locals.offer as OfferDocument;
 
     if (!userId) {
       throw new UnauthorizedException();
-    }
-
-    const offer = await this.offerService.findById(offerId);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
     }
 
     const dto = req.body as CreateCommentDto;
     const commentData = {
       ...dto,
       author: new Types.ObjectId(userId),
-      offer: new Types.ObjectId(offerId)
+      offer: new Types.ObjectId(offer._id.toString())
     };
 
     const comment = await this.commentService.create(commentData);

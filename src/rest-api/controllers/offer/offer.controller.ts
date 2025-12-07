@@ -13,12 +13,14 @@ import { OfferDocument } from '../../models/offer.model.js';
 import { UserDocument } from '../../models/user.model.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
+import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
 
 @injectable()
 export class OfferController extends Controller {
   private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
   private readonly validateCreateOfferDtoMiddleware: ValidateDtoMiddleware;
   private readonly validateUpdateOfferDtoMiddleware: ValidateDtoMiddleware;
+  private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
 
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
@@ -29,6 +31,12 @@ export class OfferController extends Controller {
     this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
     this.validateCreateOfferDtoMiddleware = new ValidateDtoMiddleware(CreateOfferDto);
     this.validateUpdateOfferDtoMiddleware = new ValidateDtoMiddleware(UpdateOfferDto);
+    this.checkOfferExistsMiddleware = new DocumentExistsMiddleware<OfferDocument>(
+      this.offerService,
+      'offerId',
+      'offer',
+      'Offer not found'
+    );
   }
 
   public getRouter(): Router {
@@ -44,17 +52,20 @@ export class OfferController extends Controller {
     router.get(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.show.bind(this))
     );
     router.patch(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
       asyncHandler(this.validateUpdateOfferDtoMiddleware.execute.bind(this.validateUpdateOfferDtoMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.update.bind(this))
     );
     router.delete(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.delete.bind(this))
     );
 
@@ -101,14 +112,15 @@ export class OfferController extends Controller {
   private async show(req: Request, res: Response): Promise<void> {
     const { offerId } = req.params;
     const userId = await this.getUserIdFromRequest(req);
-
     const offer = await this.offerService.findByIdWithFavorites(offerId, userId);
 
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
 
-    const isFavorite = userId ? ((offer as OfferDocument & { isFavorite?: boolean }).isFavorite || false) : false;
+    const isFavorite = userId
+      ? ((offer as OfferDocument & { isFavorite?: boolean }).isFavorite || false)
+      : false;
     const offerResponse = transformOfferToResponse(offer, isFavorite);
 
     this.ok(res, offerResponse);
@@ -117,12 +129,7 @@ export class OfferController extends Controller {
   private async update(req: Request, res: Response): Promise<void> {
     const { offerId } = req.params;
     const userId = await this.getUserIdFromRequest(req, true);
-
-    const offer = await this.offerService.findById(offerId);
-
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
+    const offer = res.locals.offer as OfferDocument;
 
     const author = offer.author as UserDocument;
     const offerAuthorId = author._id?.toString() || (offer.author as unknown as { toString(): string }).toString();
@@ -146,12 +153,7 @@ export class OfferController extends Controller {
   private async delete(req: Request, res: Response): Promise<void> {
     const { offerId } = req.params;
     const userId = await this.getUserIdFromRequest(req, true);
-
-    const offer = await this.offerService.findById(offerId);
-
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
+    const offer = res.locals.offer as OfferDocument;
 
     const author = offer.author as UserDocument;
     const offerAuthorId = author._id?.toString() || (offer.author as unknown as { toString(): string }).toString();
