@@ -44,3 +44,10 @@ export interface OfferResponse extends OfferListItemResponse {
   location: LocationResponse;
 }
 
+export interface CommentResponse {
+  id: string;
+  text: string;
+  postDate: string;
+  rating: number;
+  author: UserResponse;
+}

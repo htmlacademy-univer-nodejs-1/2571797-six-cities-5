@@ -20,6 +20,7 @@ import { ExceptionFilter } from '../core/exception-filter/exception-filter.js';
 import { AuthController } from '../controllers/auth/auth.controller.js';
 import { OfferController } from '../controllers/offer/offer.controller.js';
 import { FavoriteController } from '../controllers/favorite/favorite.controller.js';
+import { CommentController } from '../controllers/comment/comment.controller.js';
 
 export const container = new Container();
 
@@ -42,3 +43,4 @@ container.bind<ExceptionFilter>('ExceptionFilter').to(ExceptionFilter);
 container.bind<AuthController>('AuthController').to(AuthController);
 container.bind<OfferController>('OfferController').to(OfferController);
 container.bind<FavoriteController>('FavoriteController').to(FavoriteController);
+container.bind<CommentController>('CommentController').to(CommentController);

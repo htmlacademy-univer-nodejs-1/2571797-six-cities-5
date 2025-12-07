@@ -49,7 +49,38 @@ export const config = convict({
     format: String,
     default: '',
     env: 'SALT'
+  },
+  jwt: {
+    secret: {
+      doc: 'JWT secret key for token signing',
+      format: String,
+      default: '',
+      env: 'JWT_SECRET'
+    },
+    expiresIn: {
+      doc: 'JWT token expiration time',
+      format: String,
+      default: '7d',
+      env: 'JWT_EXPIRES_IN'
+    }
+  },
+  logLevel: {
+    doc: 'Logging level',
+    format: String,
+    default: 'info',
+    env: 'LOG_LEVEL'
   }
 });
 
 config.validate({ allowed: 'strict' });
+
+const salt = config.get('salt') as string;
+const jwtSecret = (config.get('jwt') as { secret: string }).secret;
+
+if (!salt || salt.trim() === '') {
+  throw new Error('SALT environment variable is required and cannot be empty');
+}
+
+if (!jwtSecret || jwtSecret.trim() === '') {
+  throw new Error('JWT_SECRET environment variable is required and cannot be empty');
+}

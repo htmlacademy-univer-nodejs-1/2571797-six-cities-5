@@ -1,6 +1,7 @@
 import { UserDocument } from '../models/user.model.js';
 import { OfferDocument } from '../models/offer.model.js';
-import { UserResponse, OfferListItemResponse, OfferResponse, LocationResponse } from '../types/response.types.js';
+import { CommentDocument } from '../models/comment.model.js';
+import { UserResponse, OfferListItemResponse, OfferResponse, LocationResponse, CommentResponse } from '../types/response.types.js';
 
 export function transformUserToResponse(user: UserDocument): UserResponse {
   return {
@@ -47,6 +48,18 @@ export function transformOfferToResponse(offer: OfferDocument, isFavorite = fals
     comforts: offer.comforts,
     author: transformUserToResponse(author),
     location: transformLocationToResponse(offer.location)
+  };
+}
+
+export function transformCommentToResponse(comment: CommentDocument): CommentResponse {
+  const author = comment.author as UserDocument;
+
+  return {
+    id: comment._id.toString(),
+    text: comment.text,
+    postDate: comment.postDate.toISOString(),
+    rating: comment.rating,
+    author: transformUserToResponse(author)
   };
 }
 

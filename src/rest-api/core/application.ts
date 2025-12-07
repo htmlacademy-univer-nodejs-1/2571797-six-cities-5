@@ -5,6 +5,8 @@ import { ExceptionFilter } from './exception-filter/exception-filter.js';
 import { AuthController } from '../controllers/auth/auth.controller.js';
 import { OfferController } from '../controllers/offer/offer.controller.js';
 import { FavoriteController } from '../controllers/favorite/favorite.controller.js';
+import { CommentController } from '../controllers/comment/comment.controller.js';
+import { DatabaseClient } from '../database/database.js';
 
 interface Config {
   get(key: string): string | number | object;
@@ -20,13 +22,17 @@ export class Application {
     @inject('ExceptionFilter') private readonly exceptionFilter: ExceptionFilter,
     @inject('AuthController') private readonly authController: AuthController,
     @inject('OfferController') private readonly offerController: OfferController,
-    @inject('FavoriteController') private readonly favoriteController: FavoriteController
+    @inject('FavoriteController') private readonly favoriteController: FavoriteController,
+    @inject('CommentController') private readonly commentController: CommentController,
+    @inject('DatabaseClient') private readonly databaseClient: DatabaseClient
   ) {
     this.expressApp = express();
   }
 
   public async init(): Promise<void> {
     this.logger.info('Application initialization started');
+
+    await this.databaseClient.connect();
 
     this.initMiddleware();
     this.initRoutes();
@@ -45,6 +51,7 @@ export class Application {
   private initRoutes(): void {
     this.expressApp.use('/api/auth', this.authController.getRouter());
     this.expressApp.use('/api/offers', this.offerController.getRouter());
+    this.expressApp.use('/api/offers', this.commentController.getRouter());
     this.expressApp.use('/api/favorites', this.favoriteController.getRouter());
   }
 

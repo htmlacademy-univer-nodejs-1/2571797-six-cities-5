@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { injectable, inject } from 'inversify';
 import asyncHandler from 'express-async-handler';
-import { plainToInstance } from 'class-transformer';
+import { Types } from 'mongoose';
 import { Controller } from '../../core/controller/controller.abstract.js';
 import { OfferDatabaseService } from '../../interfaces/database.interface.js';
 import { CreateOfferDto } from '../../dto/create-offer.dto.js';
@@ -11,26 +11,52 @@ import { NotFoundException, ForbiddenException, UnauthorizedException } from '..
 import { AuthService } from '../../services/auth.service.js';
 import { OfferDocument } from '../../models/offer.model.js';
 import { UserDocument } from '../../models/user.model.js';
-import { Types } from 'mongoose';
+import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
+import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 
 @injectable()
 export class OfferController extends Controller {
+  private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
+  private readonly validateCreateOfferDtoMiddleware: ValidateDtoMiddleware;
+  private readonly validateUpdateOfferDtoMiddleware: ValidateDtoMiddleware;
+
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
-    @inject('AuthService') private readonly authService: AuthService
+    @inject('AuthService') authService: AuthService
   ) {
     super();
+    this.authService = authService;
+    this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
+    this.validateCreateOfferDtoMiddleware = new ValidateDtoMiddleware(CreateOfferDto);
+    this.validateUpdateOfferDtoMiddleware = new ValidateDtoMiddleware(UpdateOfferDto);
   }
 
   public getRouter(): Router {
     const router = Router();
 
     router.get('/', asyncHandler(this.index.bind(this)));
-    router.post('/', asyncHandler(this.create.bind(this)));
+    router.post(
+      '/',
+      asyncHandler(this.validateCreateOfferDtoMiddleware.execute.bind(this.validateCreateOfferDtoMiddleware)),
+      asyncHandler(this.create.bind(this))
+    );
     router.get('/premium/:city', asyncHandler(this.getPremium.bind(this)));
-    router.get('/:offerId', asyncHandler(this.show.bind(this)));
-    router.patch('/:offerId', asyncHandler(this.update.bind(this)));
-    router.delete('/:offerId', asyncHandler(this.delete.bind(this)));
+    router.get(
+      '/:offerId',
+      asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.show.bind(this))
+    );
+    router.patch(
+      '/:offerId',
+      asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.validateUpdateOfferDtoMiddleware.execute.bind(this.validateUpdateOfferDtoMiddleware)),
+      asyncHandler(this.update.bind(this))
+    );
+    router.delete(
+      '/:offerId',
+      asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.delete.bind(this))
+    );
 
     return router;
   }
@@ -54,7 +80,7 @@ export class OfferController extends Controller {
       throw new UnauthorizedException();
     }
 
-    const dto = plainToInstance(CreateOfferDto, req.body);
+    const dto = req.body as CreateOfferDto;
     const offerData = {
       ...dto,
       author: new Types.ObjectId(userId)
@@ -104,15 +130,11 @@ export class OfferController extends Controller {
       throw new ForbiddenException();
     }
 
-    const dto = plainToInstance(UpdateOfferDto, req.body);
+    const dto = req.body as UpdateOfferDto;
     const updatedOffer = await this.offerService.update(offerId, dto);
 
     if (!updatedOffer) {
       throw new NotFoundException('Offer not found');
-    }
-
-    if (!userId) {
-      throw new UnauthorizedException();
     }
 
     const isFavorite = await this.offerService.isFavorite(userId, offerId);
@@ -152,29 +174,6 @@ export class OfferController extends Controller {
     });
 
     this.ok(res, offersResponse);
-  }
-
-  private async getUserIdFromRequest(req: Request, required = false): Promise<string | undefined> {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      if (required) {
-        throw new UnauthorizedException();
-      }
-      return undefined;
-    }
-
-    const token = authHeader.substring(7);
-    const user = await this.authService.getUserByToken(token);
-
-    if (!user) {
-      if (required) {
-        throw new UnauthorizedException();
-      }
-      return undefined;
-    }
-
-    return user._id.toString();
   }
 }
 

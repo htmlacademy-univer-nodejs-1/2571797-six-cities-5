@@ -6,22 +6,35 @@ import { OfferDatabaseService } from '../../interfaces/database.interface.js';
 import { transformOfferToListItem } from '../../utils/response-transformers.js';
 import { UnauthorizedException } from '../../exceptions/app.exception.js';
 import { AuthService } from '../../services/auth.service.js';
+import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 
 @injectable()
 export class FavoriteController extends Controller {
+  private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
+
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
-    @inject('AuthService') private readonly authService: AuthService
+    @inject('AuthService') authService: AuthService
   ) {
     super();
+    this.authService = authService;
+    this.validateOfferIdMiddleware = new ValidateObjectIdMiddleware('offerId');
   }
 
   public getRouter(): Router {
     const router = Router();
 
     router.get('/', asyncHandler(this.index.bind(this)));
-    router.post('/:offerId', asyncHandler(this.create.bind(this)));
-    router.delete('/:offerId', asyncHandler(this.delete.bind(this)));
+    router.post(
+      '/:offerId',
+      asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.create.bind(this))
+    );
+    router.delete(
+      '/:offerId',
+      asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.delete.bind(this))
+    );
 
     return router;
   }
@@ -58,29 +71,6 @@ export class FavoriteController extends Controller {
 
     await this.offerService.removeFromFavorites(userId, offerId);
     this.noContent(res);
-  }
-
-  private async getUserIdFromRequest(req: Request, required = false): Promise<string | undefined> {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      if (required) {
-        throw new UnauthorizedException();
-      }
-      return undefined;
-    }
-
-    const token = authHeader.substring(7);
-    const user = await this.authService.getUserByToken(token);
-
-    if (!user) {
-      if (required) {
-        throw new UnauthorizedException();
-      }
-      return undefined;
-    }
-
-    return user._id.toString();
   }
 }
 

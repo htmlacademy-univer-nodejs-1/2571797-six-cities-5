@@ -19,16 +19,22 @@ export interface AuthResult {
   token: string;
 }
 
+interface Config {
+  get(key: string): string | number | object;
+}
+
 @injectable()
 export class AuthService {
   private readonly jwtSecret: string;
   private readonly jwtExpiresIn: string;
 
   constructor(
-    @inject('UserService') private readonly userService: UserDatabaseService
+    @inject('UserService') private readonly userService: UserDatabaseService,
+    @inject('Config') private readonly config: Config
   ) {
-    this.jwtSecret = process.env.JWT_SECRET || 'very-secret-key';
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const jwtConfig = this.config.get('jwt') as { secret: string; expiresIn: string };
+    this.jwtSecret = jwtConfig.secret;
+    this.jwtExpiresIn = jwtConfig.expiresIn;
   }
 
   public async register(userData: {
