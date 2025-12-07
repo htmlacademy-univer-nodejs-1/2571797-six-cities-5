@@ -27,6 +27,11 @@ export abstract class Controller {
       throw new Error('AuthService is not initialized in controller');
     }
 
+    const requestWithUser = req as Request & { userId?: string };
+    if (requestWithUser.userId) {
+      return requestWithUser.userId;
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -46,7 +51,8 @@ export abstract class Controller {
       return undefined;
     }
 
-    return user._id.toString();
+    requestWithUser.userId = user._id.toString();
+    return requestWithUser.userId;
   }
 }
 

@@ -14,6 +14,7 @@ import { UserDocument } from '../../models/user.model.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
+import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
 
 @injectable()
 export class OfferController extends Controller {
@@ -21,6 +22,7 @@ export class OfferController extends Controller {
   private readonly validateCreateOfferDtoMiddleware: ValidateDtoMiddleware;
   private readonly validateUpdateOfferDtoMiddleware: ValidateDtoMiddleware;
   private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
+  private readonly authMiddleware: AuthMiddleware;
 
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
@@ -37,6 +39,7 @@ export class OfferController extends Controller {
       'offer',
       'Offer not found'
     );
+    this.authMiddleware = new AuthMiddleware(authService);
   }
 
   public getRouter(): Router {
@@ -45,6 +48,7 @@ export class OfferController extends Controller {
     router.get('/', asyncHandler(this.index.bind(this)));
     router.post(
       '/',
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
       asyncHandler(this.validateCreateOfferDtoMiddleware.execute.bind(this.validateCreateOfferDtoMiddleware)),
       asyncHandler(this.create.bind(this))
     );
@@ -58,6 +62,7 @@ export class OfferController extends Controller {
     router.patch(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
       asyncHandler(this.validateUpdateOfferDtoMiddleware.execute.bind(this.validateUpdateOfferDtoMiddleware)),
       asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.update.bind(this))
@@ -65,6 +70,7 @@ export class OfferController extends Controller {
     router.delete(
       '/:offerId',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
       asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.delete.bind(this))
     );
