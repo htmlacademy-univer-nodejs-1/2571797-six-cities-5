@@ -33,8 +33,6 @@ export class UserEntity {
 
   @prop({
     required: true,
-    minlength: 6,
-    maxlength: 12,
     select: false
   })
   public password!: string;

@@ -6,7 +6,7 @@ import {OfferService} from '../../rest-api/services/offer.service.js';
 import {FavoriteService} from '../../rest-api/services/favorite.service.js';
 import type {UserEntity} from '../../rest-api/models/user.model.js';
 import type {OfferEntity} from '../../rest-api/models/offer.model.js';
-import {config} from '../config/config.js';
+import {config} from '../../rest-api/config/config.js';
 import {Types} from 'mongoose';
 import chalk from 'chalk';
 import { stringToCity, stringToHousingType, stringsToComfortTypes } from '../../shared/utils/type-converters.js';
@@ -27,7 +27,10 @@ export class ImportCommand implements CommandInterface {
 
     const fileReader = new TSVFileReader(filename);
     const databaseClient = DatabaseClient.getInstance();
-    const userService = new UserService();
+    const cliConfig = {
+      get: (key: string): string | number | object => config.get(key as never) as string | number | object
+    };
+    const userService = new UserService(cliConfig);
     const favoriteService = new FavoriteService();
     const offerService = new OfferService(favoriteService);
 
@@ -77,7 +80,7 @@ export class ImportCommand implements CommandInterface {
                 type: offer.author.type
               };
 
-              const newUser = await userService.create(userData);
+              const newUser = await userService.createWithHashedPassword(userData);
               userId = newUser._id.toString();
               userMap.set(offer.author.email, userId);
               importedUsers++;
