@@ -12,6 +12,7 @@ import { LoginResponse } from '../../types/response.types.js';
 import { UnauthorizedException, BadRequestException, NotFoundException } from '../../exceptions/app.exception.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 import { UploadFileMiddleware } from '../../core/middleware/upload-file.middleware.js';
+import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
 import type { ParamsDictionary } from 'express-serve-static-core';
 
 interface Config {
@@ -26,6 +27,7 @@ export class AuthController extends Controller {
   private readonly validateCreateUserDtoMiddleware: ValidateDtoMiddleware;
   private readonly validateLoginUserDtoMiddleware: ValidateDtoMiddleware;
   private readonly uploadAvatarMiddleware: UploadFileMiddleware;
+  private readonly authMiddleware: AuthMiddleware;
 
   constructor(
     @inject('AuthService') authService: AuthService,
@@ -40,6 +42,7 @@ export class AuthController extends Controller {
       this.config.get('uploadDirectory') as string,
       'avatar'
     );
+    this.authMiddleware = new AuthMiddleware(authService);
   }
 
   public getRouter(): Router {
@@ -55,9 +58,14 @@ export class AuthController extends Controller {
       asyncHandler(this.validateLoginUserDtoMiddleware.execute.bind(this.validateLoginUserDtoMiddleware)),
       asyncHandler(this.login.bind(this))
     );
-    router.get('/check', asyncHandler(this.check.bind(this)));
+    router.get(
+      '/check',
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
+      asyncHandler(this.check.bind(this))
+    );
     router.post(
       '/avatar',
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
       this.uploadAvatarMiddleware.execute.bind(this.uploadAvatarMiddleware),
       asyncHandler(this.uploadAvatar.bind(this))
     );
@@ -84,14 +92,8 @@ export class AuthController extends Controller {
   }
 
   private async check(req: Request, res: Response): Promise<void> {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException();
-    }
-
-    const token = authHeader.substring(7);
-    const user = await this.authService.checkAuth(token);
+    const userId = await this.getUserIdFromRequest(req, true);
+    const user = userId ? await this.userService.findById(userId) : null;
 
     if (!user) {
       throw new UnauthorizedException();

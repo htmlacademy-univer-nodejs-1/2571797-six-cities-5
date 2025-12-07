@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 import { ValidateDtoMiddleware } from '../../core/middleware/validate-dto.middleware.js';
 import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
+import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
 import { OfferDocument } from '../../models/offer.model.js';
 
 @injectable()
@@ -18,6 +19,7 @@ export class CommentController extends Controller {
   private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
   private readonly validateCreateCommentDtoMiddleware: ValidateDtoMiddleware;
   private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
+  private readonly authMiddleware: AuthMiddleware;
 
   constructor(
     @inject('CommentService') private readonly commentService: CommentDatabaseService,
@@ -34,6 +36,7 @@ export class CommentController extends Controller {
       'offer',
       'Offer not found'
     );
+    this.authMiddleware = new AuthMiddleware(authService);
   }
 
   public getRouter(): Router {
@@ -48,6 +51,7 @@ export class CommentController extends Controller {
     router.post(
       '/:offerId/comments',
       asyncHandler(this.validateOfferIdMiddleware.execute.bind(this.validateOfferIdMiddleware)),
+      asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)),
       asyncHandler(this.validateCreateCommentDtoMiddleware.execute.bind(this.validateCreateCommentDtoMiddleware)),
       asyncHandler(this.checkOfferExistsMiddleware.execute.bind(this.checkOfferExistsMiddleware)),
       asyncHandler(this.create.bind(this))

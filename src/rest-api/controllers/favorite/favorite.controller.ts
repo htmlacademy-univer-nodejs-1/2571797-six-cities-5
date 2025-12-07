@@ -8,12 +8,14 @@ import { UnauthorizedException } from '../../exceptions/app.exception.js';
 import { AuthService } from '../../services/auth.service.js';
 import { ValidateObjectIdMiddleware } from '../../core/middleware/validate-objectid.middleware.js';
 import { DocumentExistsMiddleware } from '../../core/middleware/document-exists.middleware.js';
+import { AuthMiddleware } from '../../core/middleware/auth.middleware.js';
 import { OfferDocument } from '../../models/offer.model.js';
 
 @injectable()
 export class FavoriteController extends Controller {
   private readonly validateOfferIdMiddleware: ValidateObjectIdMiddleware;
   private readonly checkOfferExistsMiddleware: DocumentExistsMiddleware<OfferDocument>;
+  private readonly authMiddleware: AuthMiddleware;
 
   constructor(
     @inject('OfferService') private readonly offerService: OfferDatabaseService,
@@ -28,10 +30,13 @@ export class FavoriteController extends Controller {
       'offer',
       'Offer not found'
     );
+    this.authMiddleware = new AuthMiddleware(authService);
   }
 
   public getRouter(): Router {
     const router = Router();
+
+    router.use(asyncHandler(this.authMiddleware.execute.bind(this.authMiddleware)));
 
     router.get('/', asyncHandler(this.index.bind(this)));
     router.post(
