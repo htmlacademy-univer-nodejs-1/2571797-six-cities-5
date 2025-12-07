@@ -16,6 +16,10 @@ import {
   CommentDatabaseService,
   FavoriteDatabaseService
 } from '../interfaces/database.interface.js';
+import { ExceptionFilter } from '../core/exception-filter/exception-filter.js';
+import { AuthController } from '../controllers/auth/auth.controller.js';
+import { OfferController } from '../controllers/offer/offer.controller.js';
+import { FavoriteController } from '../controllers/favorite/favorite.controller.js';
 
 export const container = new Container();
 
@@ -32,3 +36,9 @@ container.bind<OfferDatabaseService>('OfferService').to(OfferService);
 container.bind<CommentDatabaseService>('CommentService').to(CommentService);
 container.bind<FavoriteDatabaseService>('FavoriteService').to(FavoriteService);
 container.bind<AuthService>('AuthService').to(AuthService);
+
+container.bind<ExceptionFilter>('ExceptionFilter').to(ExceptionFilter);
+
+container.bind<AuthController>('AuthController').to(AuthController);
+container.bind<OfferController>('OfferController').to(OfferController);
+container.bind<FavoriteController>('FavoriteController').to(FavoriteController);
