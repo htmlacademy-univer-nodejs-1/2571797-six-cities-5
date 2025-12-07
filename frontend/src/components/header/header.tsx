@@ -4,7 +4,8 @@ import { AppRoute } from '../../const';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { getFavoriteOffers } from '../../store/site-data/selectors';
 import { getIsAuthorized, getUser } from '../../store/user-process/selectors';
-import { logoutUser } from '../../store/action';
+import { fetchFavoriteOffers, logoutUser } from '../../store/action';
+import { useEffect } from 'react';
 
 const pagesWithoutNavigation = [AppRoute.Login, AppRoute.Register];
 
@@ -14,6 +15,12 @@ const Header = () => {
   const isAuthorized = useAppSelector(getIsAuthorized);
   const user = useAppSelector(getUser);
   const favoriteOffers = useAppSelector(getFavoriteOffers);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      dispatch(fetchFavoriteOffers());
+    }
+  }, [dispatch, isAuthorized]);
 
   const handleLogoutClick = () => {
     if (isAuthorized) {

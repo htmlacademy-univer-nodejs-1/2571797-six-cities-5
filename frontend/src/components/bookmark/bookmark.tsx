@@ -17,7 +17,7 @@ const Bookmark = ({ id, isActive, place = 'place-card' }: BookmarkProps) => {
   const handleButtonClick = () => {
     dispatch(postFavorite({
       id,
-      status: isActive ? 0 : 1
+      status: !isActive
     }));
   };
 

@@ -15,6 +15,7 @@ export type City = {
 };
 
 export type User = {
+  id?: string;
   name: string;
   avatarUrl: string;
   isPro: boolean;
@@ -24,7 +25,7 @@ export type User = {
 export type UserAuth = Pick<User, 'email'> & { password: string };
 export type CommentAuth = Pick<Comment, 'comment' | 'rating'> &
   Pick<Offer, 'id'>;
-export type FavoriteAuth = Pick<Offer, 'id'> & { status: 1 | 0 };
+export type FavoriteAuth = Pick<Offer, 'id'> & { status: boolean };
 export type UserRegister = Omit<User, 'avatarUrl'> &
   Pick<UserAuth, 'password'> & { avatar?: File };
 
@@ -38,6 +39,7 @@ export type Comment = {
 
 export type Offer = {
   id: string;
+  postDate?: string;
   price: number;
   rating: number;
   title: string;
@@ -53,6 +55,7 @@ export type Offer = {
   host: User;
   images: string[];
   maxAdults: number;
+  commentsCount?: number;
 };
 
 export type NewOffer = {
@@ -60,6 +63,8 @@ export type NewOffer = {
   description: string;
   city: City;
   previewImage: string;
+  images: string[];
+  rating: number;
   isPremium: boolean;
   type: Type;
   bedrooms: number;

@@ -12,6 +12,8 @@ enum FormFieldName {
   description = 'description',
   cityName = 'cityName',
   previewImage = 'previewImage',
+  images = 'images',
+  rating = 'rating',
   isPremium = 'isPremium',
   type = 'type',
   bedrooms = 'bedrooms',
@@ -44,6 +46,23 @@ const getCity = (cityName: FormDataEntryValue | null): City => {
   return { name: CITIES[0], location: CityLocation[CITIES[0]] };
 };
 
+const parseImages = (value: FormDataEntryValue | null, previewImage: string): string[] => {
+  if (!value) {
+    return previewImage ? [previewImage] : [];
+  }
+
+  const raw = String(value)
+    .split(/\s*[,\n]\s*/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (raw.length === 0 && previewImage) {
+    return [previewImage];
+  }
+
+  return raw;
+};
+
 type OfferFormProps<T> = {
   offer: T;
   onSubmit: (offerData: T) => void;
@@ -58,6 +77,8 @@ const OfferForm = <T extends Offer | NewOffer>({
     description,
     city,
     previewImage,
+    images,
+    rating,
     isPremium,
     type,
     bedrooms,
@@ -96,6 +117,8 @@ const OfferForm = <T extends Offer | NewOffer>({
       bedrooms: Number(formData.get(FormFieldName.bedrooms)),
       maxAdults: Number(formData.get(FormFieldName.maxAdults)),
       price: Number(formData.get(FormFieldName.price)),
+      images: parseImages(formData.get(FormFieldName.images), String(formData.get(FormFieldName.previewImage) ?? previewImage)),
+      rating: Number(formData.get(FormFieldName.rating) ?? rating) || 1,
       goods: getGoods(formData.entries()),
       location: chosenLocation,
     };
@@ -164,6 +187,18 @@ const OfferForm = <T extends Offer | NewOffer>({
           defaultValue={previewImage}
         />
       </div>
+      <div className="form__input-wrapper">
+        <label htmlFor="images" className="offer-form__label">
+          Images (comma or newline separated, up to 6)
+        </label>
+        <textarea
+          className="form__input offer-form__textarea"
+          placeholder="Enter 6 image URLs"
+          name={FormFieldName.images}
+          id="images"
+          defaultValue={images.filter(Boolean).join('\n')}
+        />
+      </div>
       <fieldset className="type-fieldset">
         <div className="form__input-wrapper">
           <label htmlFor="type" className="type-fieldset__label">
@@ -192,6 +227,23 @@ const OfferForm = <T extends Offer | NewOffer>({
             name={FormFieldName.price}
             id="price"
             defaultValue={price}
+          />
+        </div>
+        <div className="form__input-wrapper">
+          <label htmlFor="rating" className="type-fieldset__label">
+            Rating
+          </label>
+          <input
+            className="form__input type-fieldset__number-input"
+            type="number"
+            placeholder="4.5"
+            name={FormFieldName.rating}
+            id="rating"
+            min={1}
+            max={5}
+            step={0.1}
+            defaultValue={rating}
+            required
           />
         </div>
         <div className="form__input-wrapper">

@@ -24,8 +24,14 @@ const Register = (): JSX.Element => {
     e.preventDefault();
     const form = e.currentTarget;
 
-    const formData = new FormData(form) as Iterable<[UserRegister]>;
-    const data = Object.fromEntries(formData);
+    const formData = new FormData(form);
+    const data: UserRegister = {
+      name: String(formData.get('name')),
+      email: String(formData.get('email')),
+      password: String(formData.get('password')),
+      isPro: Boolean(formData.get('isPro')),
+      avatar,
+    };
 
     dispatch(registerUser(data));
   };

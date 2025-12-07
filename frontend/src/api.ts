@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 import { Token } from './utils';
 
-const BACKEND_URL = 'https://10.react.pages.academy/six-cities';
+const BACKEND_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000/api';
 const REQUEST_TIMEOUT = 5000;
 
 export const createAPI = (): AxiosInstance => {
@@ -17,7 +17,8 @@ export const createAPI = (): AxiosInstance => {
       const token = Token.get();
 
       if (token) {
-        config.headers['x-token'] = token;
+        config.headers = config.headers ?? {};
+        (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
       }
 
       return config;
@@ -28,7 +29,9 @@ export const createAPI = (): AxiosInstance => {
     (response) => response,
     (error: AxiosError) => {
       toast.dismiss();
-      toast.warn(error.response ? error.response.data.error : error.message);
+      const responseData = error.response?.data as { message?: string; error?: string } | undefined;
+      const message = responseData?.message || responseData?.error || error.message;
+      toast.warn(message);
 
       return Promise.reject(error);
     }
