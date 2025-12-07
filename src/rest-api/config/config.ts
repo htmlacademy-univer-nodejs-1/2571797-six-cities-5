@@ -64,6 +64,12 @@ export const config = convict({
       env: 'JWT_EXPIRES_IN'
     }
   },
+  uploadDirectory: {
+    doc: 'Directory to store uploaded user files',
+    format: String,
+    default: './upload',
+    env: 'UPLOAD_DIRECTORY'
+  },
   logLevel: {
     doc: 'Logging level',
     format: String,
@@ -76,6 +82,7 @@ config.validate({ allowed: 'strict' });
 
 const salt = config.get('salt') as string;
 const jwtSecret = (config.get('jwt') as { secret: string }).secret;
+const uploadDirectory = config.get('uploadDirectory') as string;
 
 if (!salt || salt.trim() === '') {
   throw new Error('SALT environment variable is required and cannot be empty');
@@ -83,4 +90,8 @@ if (!salt || salt.trim() === '') {
 
 if (!jwtSecret || jwtSecret.trim() === '') {
   throw new Error('JWT_SECRET environment variable is required and cannot be empty');
+}
+
+if (!uploadDirectory || uploadDirectory.trim() === '') {
+  throw new Error('UPLOAD_DIRECTORY environment variable is required and cannot be empty');
 }

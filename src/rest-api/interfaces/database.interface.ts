@@ -3,6 +3,10 @@ import { OfferDocument, OfferEntity } from '../models/offer.model.js';
 import { CommentDocument, CommentEntity } from '../models/comment.model.js';
 import { FavoriteDocument, FavoriteEntity } from '../models/favorite.model.js';
 
+export interface DocumentExistsService<TDocument> {
+  findById(id: string): Promise<TDocument | null>;
+}
+
 export interface DatabaseService<TDocument, TEntity> {
   findById(id: string): Promise<TDocument | null>;
   create(data: Partial<TEntity>): Promise<TDocument>;
